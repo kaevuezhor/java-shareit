@@ -12,7 +12,7 @@ import static org.springframework.http.HttpStatus.*;
 
 @Slf4j
 @RestControllerAdvice
-public class ErrorHandler {
+public class ExceptionController {
 
     @ExceptionHandler
     @ResponseStatus(NOT_FOUND)
