@@ -25,6 +25,7 @@ public class ItemController {
     public List<ItemDto> searchItems(@RequestParam String text) {
         return itemService.searchItems(text);
     }
+
     @GetMapping
     public List<ItemDto> getAllItems(@RequestHeader ("X-Sharer-User-Id") int userId) {
         log.info("Запрошены все предметы");
@@ -49,7 +50,7 @@ public class ItemController {
     public ItemDto updateItem(@PathVariable int itemId,
                               @RequestBody Item item,
                               @RequestHeader ("X-Sharer-User-Id") int userId
-    ){
+    ) {
         log.info("Обновлен предмет " + itemId + " пользователем " + userId + ",\n"
         + "Обновлено: " + item);
         return itemService.updateItem(itemId, item, userId);

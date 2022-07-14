@@ -8,6 +8,7 @@ import ru.practicum.shareit.user.service.UserService;
 
 import javax.validation.Valid;
 import java.util.List;
+
 @Slf4j
 @RestController
 @RequestMapping(path = "/users")
