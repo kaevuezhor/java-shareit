@@ -2,6 +2,7 @@ package ru.practicum.shareit.exception.controller;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
+import ru.practicum.shareit.exception.AccessException;
 import ru.practicum.shareit.exception.AlreadyExistsException;
 import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.exception.ValidationException;
@@ -28,6 +29,12 @@ public class ErrorHandler {
     @ExceptionHandler
     @ResponseStatus(BAD_REQUEST)
     public ErrorResponse handleValidationException(final ValidationException e) {
+        return new ErrorResponse(e.getMessage());
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(NOT_FOUND)
+    public ErrorResponse handleAccessException(final AccessException e) {
         return new ErrorResponse(e.getMessage());
     }
 }

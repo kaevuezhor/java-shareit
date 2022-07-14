@@ -28,6 +28,13 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public List<UserDto> getAllUsers() {
+        return userDao.getAllUsers().stream()
+                .map(UserMapper::toUserDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     @SneakyThrows
     public UserDto getUser(int id) {
         try {
@@ -38,21 +45,17 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public List<UserDto> getAllUsers() {
-        return userDao.getAllUsers()
-                .stream()
-                .map(UserMapper::toUserDto)
-                .collect(Collectors.toList());
-    }
-
-    @Override
     @SneakyThrows
-    public void deleteUser(int id) {
-        try {
-            userDao.deleteUser(id);
-        } catch (RuntimeException e) {
-            throw new NotFoundException("Отсутсвует пользователь с id " + id);
+    public UserDto createUser(User user) {
+        if (isNotValidated(user)) {
+            throw new ValidationException("Ошибка валидации");
         }
+        if (isExistingEmail(user)) {
+            throw new AlreadyExistsException(
+                    String.format("Пользователь с email %s уже существует", user.getEmail())
+            );
+        }
+        return UserMapper.toUserDto(userDao.createUser(user));
     }
 
     @Override
@@ -74,21 +77,16 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @SneakyThrows
-    public UserDto createUser(User user) {
-        if (isNotValidated(user)) {
-            throw new ValidationException("Ошибка валидации");
+    public void deleteUser(int id) {
+        try {
+            userDao.deleteUser(id);
+        } catch (RuntimeException e) {
+            throw new NotFoundException("Отсутсвует пользователь с id " + id);
         }
-        if (isExistingEmail(user)) {
-            throw new AlreadyExistsException(
-                    String.format("Пользователь с email %s уже существует", user.getEmail())
-            );
-        }
-        return UserMapper.toUserDto(userDao.createUser(user));
     }
 
     private boolean isExistingEmail(User user) {
-        return userDao.getAllUsers()
-                .stream()
+        return userDao.getAllUsers().stream()
                 .map(User::getEmail)
                 .anyMatch(e -> e.equals(user.getEmail()));
     }
