@@ -4,6 +4,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import ru.practicum.shareit.exception.AlreadyExistsException;
 import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.exception.ValidationException;
@@ -14,6 +15,7 @@ import ru.practicum.shareit.user.mapper.UserMapper;
 import ru.practicum.shareit.user.service.UserService;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -35,21 +37,12 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    @SneakyThrows
-    public UserDto getUser(int id) {
-        try {
-            return UserMapper.toUserDto(userDao.getUser(id));
-        } catch (RuntimeException e) {
-            throw new NotFoundException("Отсутсвует пользователь с id " + id);
-        }
+    public Optional<UserDto> getUser(int id) {
+        return Optional.of(UserMapper.toUserDto(userDao.getUser(id)));
     }
 
     @Override
-    @SneakyThrows
-    public UserDto createUser(User user) {
-        if (isNotValidated(user)) {
-            throw new ValidationException("Ошибка валидации");
-        }
+    public UserDto createUser(User user) throws AlreadyExistsException {
         if (isExistingEmail(user)) {
             throw new AlreadyExistsException(
                     String.format("Пользователь с email %s уже существует", user.getEmail())
@@ -59,41 +52,23 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    @SneakyThrows
-    public UserDto updateUser(int id, User user) {
+    public Optional<UserDto> updateUser(int id, User user) throws AlreadyExistsException {
         if (isExistingEmail(user)) {
             throw new AlreadyExistsException(
                     String.format("Пользователь с email %s уже существует", user.getEmail())
             );
         }
-        try {
-            return UserMapper.toUserDto(
-                    userDao.updateUser(id, user)
-            );
-        } catch (RuntimeException e) {
-            throw new NotFoundException("Отсутсвует пользователь с id " + id);
-        }
+        return Optional.of(UserMapper.toUserDto(userDao.updateUser(id, user)));
     }
 
     @Override
-    @SneakyThrows
-    public void deleteUser(int id) {
-        try {
-            userDao.deleteUser(id);
-        } catch (RuntimeException e) {
-            throw new NotFoundException("Отсутсвует пользователь с id " + id);
-        }
+    public Optional<UserDto> deleteUser(int id) {
+        return Optional.of(UserMapper.toUserDto(userDao.deleteUser(id)));
     }
 
     private boolean isExistingEmail(User user) {
         return userDao.getAllUsers().stream()
                 .map(User::getEmail)
                 .anyMatch(e -> e.equals(user.getEmail()));
-    }
-
-    private boolean isNotValidated(User user) {
-        boolean isBlankName = user.getName() == null;
-        boolean isBlankEmail = user.getEmail() == null;
-        return isBlankName || isBlankEmail;
     }
 }

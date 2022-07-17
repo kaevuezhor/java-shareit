@@ -1,19 +1,21 @@
 package ru.practicum.shareit.user.service;
 
+import ru.practicum.shareit.exception.AlreadyExistsException;
 import ru.practicum.shareit.user.User;
 import ru.practicum.shareit.user.dto.UserDto;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface UserService {
 
-    UserDto getUser(int id);
+    Optional<UserDto> getUser(int id);
 
     List<UserDto> getAllUsers();
 
-    void deleteUser(int id);
+    Optional<UserDto> deleteUser(int id);
 
-    UserDto updateUser(int id, User user);
+    Optional<UserDto> updateUser(int id, User user) throws AlreadyExistsException;
 
-    UserDto createUser(User user);
+    UserDto createUser(User user) throws AlreadyExistsException;
 }

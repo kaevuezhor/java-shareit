@@ -1,12 +1,10 @@
 package ru.practicum.shareit.item.service.impl;
 
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.exception.AccessException;
 import ru.practicum.shareit.exception.NotFoundException;
-import ru.practicum.shareit.exception.ValidationException;
 import ru.practicum.shareit.item.dao.ItemDao;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.mapper.ItemMapper;
@@ -15,6 +13,7 @@ import ru.practicum.shareit.item.service.ItemService;
 import ru.practicum.shareit.user.dao.UserDao;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -42,43 +41,27 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public List<ItemDto> getAllUserItems(int userId) {
-        return itemDao.getAllItems().stream()
-                .filter(i -> i.getOwner() == userId)
+        return itemDao.getAllItems(userId).stream()
                 .map(ItemMapper::toItemDto)
                 .collect(Collectors.toList());
     }
 
     @Override
-    @SneakyThrows
-    public ItemDto getItem(int itemId) {
-        try {
-            return ItemMapper.toItemDto(itemDao.getItem(itemId));
-        } catch (RuntimeException e) {
-            throw new NotFoundException("Отсутсвует предмет с id " + itemId);
-        }
+    public Optional<ItemDto> getItem(int itemId) {
+        return Optional.of(ItemMapper.toItemDto(itemDao.getItem(itemId)));
     }
 
     @Override
-    @SneakyThrows
-    public ItemDto createItem(Item item, int userId) {
-        try {
-            userDao.getUser(userId);
-            log.info(userDao.getUser(userId).toString());
-        } catch (RuntimeException e) {
+    public ItemDto createItem(Item item, int userId) throws NotFoundException {
+        if (userDao.getUser(userId) == null) {
             throw new NotFoundException("Отсутсвует пользователь с id " + userId);
-        }
-        if (isNotValidated(item)) {
-            throw new ValidationException("Ошибка валидации");
         }
         return ItemMapper.toItemDto(itemDao.createItem(item, userId));
     }
 
     @Override
-    @SneakyThrows
-    public ItemDto updateItem(int itemId, Item item, int userId) {
-        try {
-            userDao.getUser(userId);
-        } catch (RuntimeException e) {
+    public Optional<ItemDto> updateItem(int itemId, Item item, int userId) throws NotFoundException, AccessException {
+        if (userDao.getUser(userId) == null) {
             throw new NotFoundException("Отсутсвует пользователь с id " + userId);
         }
         if (isNotOwner(itemId, userId)) {
@@ -86,21 +69,12 @@ public class ItemServiceImpl implements ItemService {
                     String.format("Пользователь %s не является владельцем предмета %s", userId, itemId)
             );
         }
-        try {
-            return ItemMapper.toItemDto(
-                    itemDao.updateItem(itemId, item)
-            );
-        } catch (RuntimeException e) {
-            throw new NotFoundException("Отсутсвует предмет с id " + itemId);
-        }
+        return Optional.of(ItemMapper.toItemDto(itemDao.updateItem(itemId, item)));
     }
 
     @Override
-    @SneakyThrows
-    public void deleteItem(int itemId, int userId) {
-        try {
-            userDao.getUser(userId);
-        } catch (RuntimeException e) {
+    public Optional<ItemDto> deleteItem(int itemId, int userId) throws AccessException, NotFoundException {
+        if (userDao.getUser(userId) == null) {
             throw new NotFoundException("Отсутсвует пользователь с id " + userId);
         }
         if (isNotOwner(itemId, userId)) {
@@ -108,19 +82,9 @@ public class ItemServiceImpl implements ItemService {
                     String.format("Пользователь %s не является владельцем предмета %s", userId, itemId)
             );
         }
-        try {
-            itemDao.deleteItem(itemId);
-        } catch (RuntimeException e) {
-            throw new NotFoundException("Отсутсвует предмет с id " + itemId);
-        }
+        return Optional.of(ItemMapper.toItemDto(itemDao.deleteItem(itemId)));
     }
 
-    private boolean isNotValidated(Item item) {
-        boolean isBlankName = item.getName() == null || item.getName().isBlank();
-        boolean isBlankDescription = item.getDescription() == null || item.getDescription().isBlank();
-        boolean isBlankAvailable = item.getAvailable() == null;
-        return isBlankName || isBlankDescription || isBlankAvailable;
-    }
 
     private boolean isNotOwner(int itemId, int userId) {
         return itemDao.getItem(itemId).getOwner() != userId;

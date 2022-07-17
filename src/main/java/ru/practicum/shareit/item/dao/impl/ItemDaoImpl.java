@@ -28,8 +28,10 @@ public class ItemDaoImpl implements ItemDao {
     }
 
     @Override
-    public List<Item> getAllItems() {
-        return new ArrayList<>(itemStorage.values());
+    public List<Item> getAllItems(int userId) {
+        return itemStorage.values().stream()
+                .filter(i -> i.getOwner() == userId)
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -53,8 +55,10 @@ public class ItemDaoImpl implements ItemDao {
     }
 
     @Override
-    public void deleteItem(int itemId) {
+    public Item deleteItem(int itemId) {
+        Item deletedItem = itemStorage.get(itemId);
         itemStorage.remove(itemId);
+        return deletedItem;
     }
 
     private Item patch(Item item) {

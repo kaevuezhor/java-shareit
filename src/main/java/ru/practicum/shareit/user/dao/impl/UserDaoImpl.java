@@ -5,10 +5,7 @@ import org.springframework.stereotype.Component;
 import ru.practicum.shareit.user.User;
 import ru.practicum.shareit.user.dao.UserDao;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Component
 public class UserDaoImpl implements UserDao {
@@ -28,8 +25,10 @@ public class UserDaoImpl implements UserDao {
     }
 
     @Override
-    public void deleteUser(int id) {
+    public User deleteUser(int id) {
+        User savedUser = userStorage.get(id);
         userStorage.remove(id);
+        return savedUser;
     }
 
     @Override

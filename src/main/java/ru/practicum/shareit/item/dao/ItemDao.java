@@ -8,7 +8,7 @@ public interface ItemDao {
 
     List<Item> getSearchedItems(String text);
 
-    List<Item> getAllItems();
+    List<Item> getAllItems(int userId);
 
     Item getItem(int id);
 
@@ -16,5 +16,5 @@ public interface ItemDao {
 
     Item createItem(Item item, int userId);
 
-    void deleteItem(int itemId);
+    Item deleteItem(int itemId);
 }
