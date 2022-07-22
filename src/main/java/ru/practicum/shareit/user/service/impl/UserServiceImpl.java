@@ -1,13 +1,15 @@
 package ru.practicum.shareit.user.service.impl;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.exception.AlreadyExistsException;
+import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.user.User;
-import ru.practicum.shareit.user.dao.UserDao;
 import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.mapper.UserMapper;
+import ru.practicum.shareit.user.repository.UserRepository;
 import ru.practicum.shareit.user.service.UserService;
 
 import java.util.List;
@@ -16,55 +18,63 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
-    private final UserDao userDao;
+    private final UserRepository userRepository;
 
-    @Autowired
-    public UserServiceImpl(UserDao userDao) {
-        this.userDao = userDao;
+    @Override
+    public List<User> getAllUsers() {
+        return userRepository.findAll();
     }
 
     @Override
-    public List<UserDto> getAllUsers() {
-        return userDao.getAllUsers().stream()
-                .map(UserMapper::toUserDto)
-                .collect(Collectors.toList());
+    public User getUser(long id) throws NotFoundException {
+        Optional<User> foundUser = userRepository.findById(id);
+        if (foundUser.isEmpty()) {
+            throw new NotFoundException("Пользователь id " + id + " не найден");
+        }
+        return foundUser.get();
     }
 
     @Override
-    public Optional<UserDto> getUser(int id) {
-        return Optional.of(UserMapper.toUserDto(userDao.getUser(id)));
-    }
-
-    @Override
-    public UserDto createUser(User user) throws AlreadyExistsException {
+    public User createUser(User user) throws AlreadyExistsException {
         if (isExistingEmail(user)) {
             throw new AlreadyExistsException(
                     String.format("Пользователь с email %s уже существует", user.getEmail())
             );
         }
-        return UserMapper.toUserDto(userDao.createUser(user));
+        return userRepository.save(user);
     }
 
     @Override
-    public Optional<UserDto> updateUser(int id, User user) throws AlreadyExistsException {
+    public User updateUser(long id, User user) throws AlreadyExistsException {
         if (isExistingEmail(user)) {
             throw new AlreadyExistsException(
                     String.format("Пользователь с email %s уже существует", user.getEmail())
             );
         }
-        return Optional.of(UserMapper.toUserDto(userDao.updateUser(id, user)));
+        return patch(user, userRepository.getReferenceById(id));
     }
 
     @Override
-    public Optional<UserDto> deleteUser(int id) {
-        return Optional.of(UserMapper.toUserDto(userDao.deleteUser(id)));
+    public void deleteUser(long id) {
+        userRepository.deleteById(id);
     }
 
     private boolean isExistingEmail(User user) {
-        return userDao.getAllUsers().stream()
+        return userRepository.findAll().stream()
                 .map(User::getEmail)
                 .anyMatch(e -> e.equals(user.getEmail()));
+    }
+
+    private User patch(User patch, User user) {
+        if (patch.getName() != null) {
+            user.setName(patch.getName());
+        }
+        if (patch.getEmail() != null) {
+            user.setEmail(patch.getEmail());
+        }
+        return userRepository.save(user);
     }
 }

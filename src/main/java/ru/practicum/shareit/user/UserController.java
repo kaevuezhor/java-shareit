@@ -8,11 +8,13 @@ import ru.practicum.shareit.exception.AlreadyExistsException;
 import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.exception.ValidationException;
 import ru.practicum.shareit.user.dto.UserDto;
+import ru.practicum.shareit.user.mapper.UserMapper;
 import ru.practicum.shareit.user.service.UserService;
 
 import javax.validation.Valid;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
@@ -29,17 +31,16 @@ public class UserController {
     @GetMapping("/{id}")
     public UserDto getUser(@PathVariable int id) throws NotFoundException {
         log.info("Запрошен пользователь id {}", id);
-        Optional<UserDto> foundUser = userService.getUser(id);
-        if (foundUser.isEmpty()) {
-            throw new NotFoundException("Пользователь с id " + id + " не найден");
-        }
-        return foundUser.get();
+        return UserMapper.toUserDto(userService.getUser(id));
     }
 
     @GetMapping
     public List<UserDto> getAllUsers() {
         log.info("Запрошен список всех пользователей");
-        return userService.getAllUsers();
+        return userService.getAllUsers()
+                .stream()
+                .map(UserMapper::toUserDto)
+                .collect(Collectors.toList());
     }
 
     @PostMapping
@@ -48,29 +49,21 @@ public class UserController {
             throw new ValidationException("Ошибка валидации");
         }
         log.info("Создан пользователь {}", user);
-        return userService.createUser(user);
+        return UserMapper.toUserDto(userService.createUser(user));
     }
 
     @PatchMapping("/{id}")
     public UserDto updateUser(@PathVariable int id,
                               @Valid @RequestBody User user
-    ) throws AlreadyExistsException, NotFoundException {
+    ) throws AlreadyExistsException{
         log.info("Обновлен пользователь id {}", id);
-        Optional<UserDto> updatedUser = userService.updateUser(id, user);
-        if (updatedUser.isEmpty()) {
-            throw new NotFoundException("Пользователь с id " + id + " не найден");
-        }
-        return updatedUser.get();
+        return UserMapper.toUserDto(userService.updateUser(id, user));
     }
 
     @DeleteMapping("/{id}")
-    public UserDto deleteUser(@PathVariable int id) throws NotFoundException {
+    public void deleteUser(@PathVariable int id){
         log.info("Удалён пользователь id {}", id);
-        Optional<UserDto> deletedUser = userService.deleteUser(id);
-        if (deletedUser.isEmpty()) {
-            throw new NotFoundException("Пользователь с id " + id + " не найден");
-        }
-        return deletedUser.get();
+        userService.deleteUser(id);
     }
 
     private boolean isNotValidated(User user) {

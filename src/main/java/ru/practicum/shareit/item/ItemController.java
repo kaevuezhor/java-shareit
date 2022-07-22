@@ -8,11 +8,12 @@ import ru.practicum.shareit.exception.AccessException;
 import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.exception.ValidationException;
 import ru.practicum.shareit.item.dto.ItemDto;
+import ru.practicum.shareit.item.mapper.ItemMapper;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.service.ItemService;
 
 import java.util.List;
-import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
@@ -28,23 +29,25 @@ public class ItemController {
 
     @GetMapping("/search")
     public List<ItemDto> searchItems(@RequestParam String text) {
-        return itemService.searchItems(text);
+        return itemService.searchItems(text)
+                .stream()
+                .map(ItemMapper::toItemDto)
+                .collect(Collectors.toList());
     }
 
     @GetMapping
     public List<ItemDto> getAllItems(@RequestHeader ("X-Sharer-User-Id") int userId) {
-        log.info("Запрошены все предметы");
-        return itemService.getAllUserItems(userId);
+        log.info("Запрошены все предметы пользователя {}", userId);
+        return itemService.getAllUserItems(userId)
+                .stream()
+                .map(ItemMapper::toItemDto)
+                .collect(Collectors.toList());
     }
 
     @GetMapping("/{itemId}")
     public ItemDto getItem(@PathVariable int itemId) throws NotFoundException {
         log.info("Запрошен предмет id {}", itemId);
-        Optional<ItemDto> foundItem = itemService.getItem(itemId);
-        if (foundItem.isEmpty()) {
-            throw new NotFoundException("Предмет с id " + itemId + " не найден");
-        }
-        return foundItem.get();
+        return ItemMapper.toItemDto(itemService.getItem(itemId));
     }
 
     @PostMapping
@@ -55,7 +58,7 @@ public class ItemController {
             throw new ValidationException("Ошибка валидации");
         }
         log.info("Создан предмет {} пользователем {}", item, userId);
-        return itemService.createItem(item, userId);
+        return ItemMapper.toItemDto(itemService.createItem(item, userId));
     }
 
     @PatchMapping("/{itemId}")
@@ -65,23 +68,15 @@ public class ItemController {
     ) throws NotFoundException, AccessException {
         log.info("Обновлен предмет {} пользователем {},\n"
         + "Обновлено: {}", itemId, userId, item);
-        Optional<ItemDto> updatedItem = itemService.updateItem(itemId, item, userId);
-        if (updatedItem.isEmpty()) {
-            throw new NotFoundException("Предмет с id " + itemId + " не найден");
-        }
-        return updatedItem.get();
+        return ItemMapper.toItemDto(itemService.updateItem(itemId, item, userId));
     }
 
     @DeleteMapping("/{itemId}")
-    public ItemDto deleteItem(@PathVariable int itemId,
+    public void deleteItem(@PathVariable int itemId,
                            @RequestHeader ("X-Sharer-User-Id") int userId
     ) throws AccessException, NotFoundException {
         log.info("Удален предмет {} пользователем {}", itemId, userId);
-        Optional<ItemDto> deletedItem = itemService.deleteItem(itemId, userId);
-        if (deletedItem.isEmpty()) {
-            throw new NotFoundException("Предмет с id " + itemId + " не найден");
-        }
-        return deletedItem.get();
+        itemService.deleteItem(itemId, userId);
     }
 
     private boolean isNotValidated(Item item) {

@@ -10,15 +10,15 @@ import java.util.Optional;
 
 public interface ItemService {
 
-    List<ItemDto> searchItems(String text);
+    List<Item> searchItems(String text);
 
-    List<ItemDto> getAllUserItems(int userId);
+    List<Item> getAllUserItems(long userId);
 
-    Optional<ItemDto> getItem(int id);
+    Item getItem(long id) throws NotFoundException;
 
-    ItemDto createItem(Item item, int userId) throws NotFoundException;
+    Item createItem(Item item, long userId) throws NotFoundException;
 
-    Optional<ItemDto> updateItem(int itemId, Item item, int userId) throws NotFoundException, AccessException;
+    Item updateItem(long itemId, Item item, long userId) throws NotFoundException, AccessException;
 
-    Optional<ItemDto> deleteItem(int itemId, int userId) throws AccessException, NotFoundException;
+    void deleteItem(long itemId, long userId) throws AccessException, NotFoundException;
 }
