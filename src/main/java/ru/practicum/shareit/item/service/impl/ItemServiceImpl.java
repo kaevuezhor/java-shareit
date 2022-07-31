@@ -113,7 +113,7 @@ public class ItemServiceImpl implements ItemService {
             throw new NotFoundException("Предмет с id " + itemId + " не найден");
         }
         if (!isUserBookedItem(userId, itemId)) {
-            throw new NotBookedException("Пользователь " + userId + " не брал в аренду предмет "+ itemId);
+            throw new NotBookedException("Пользователь " + userId + " не брал в аренду предмет " + itemId);
         }
         comment.setAuthor(foundUser.get());
         comment.setItem(foundItem.get());

@@ -93,7 +93,7 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public List<Booking> findUserBookingsByState(long userId, BookingState state) {
-        switch (state){
+        switch (state) {
             case CURRENT:
                 return bookingRepository.findUserCurrent(userId, LocalDateTime.now());
             case PAST:
