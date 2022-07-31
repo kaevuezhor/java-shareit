@@ -2,25 +2,22 @@ package ru.practicum.shareit.user.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.exception.AlreadyExistsException;
 import ru.practicum.shareit.exception.NotFoundException;
-import ru.practicum.shareit.user.User;
-import ru.practicum.shareit.user.dto.UserDto;
-import ru.practicum.shareit.user.mapper.UserMapper;
+import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.repository.UserRepository;
 import ru.practicum.shareit.user.service.UserService;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
+    private long usersId = 1;
     private final UserRepository userRepository;
 
     @Override
@@ -39,6 +36,8 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User createUser(User user) throws AlreadyExistsException {
+        long id = usersId++;
+        user.setId(id);
         if (isExistingEmail(user)) {
             throw new AlreadyExistsException(
                     String.format("Пользователь с email %s уже существует", user.getEmail())
@@ -48,13 +47,18 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public User updateUser(long id, User user) throws AlreadyExistsException {
+    public User updateUser(long id, User user) throws AlreadyExistsException, NotFoundException {
         if (isExistingEmail(user)) {
             throw new AlreadyExistsException(
                     String.format("Пользователь с email %s уже существует", user.getEmail())
             );
         }
-        return patch(user, userRepository.getReferenceById(id));
+        Optional<User> savedUser = userRepository.findById(id);
+        if (savedUser.isEmpty()) {
+            throw new NotFoundException(String.format("Пользователь %s не найден", id));
+        }
+        User updatedUser = patch(user, userRepository.getReferenceById(id));
+        return userRepository.save(updatedUser);
     }
 
     @Override
@@ -75,6 +79,6 @@ public class UserServiceImpl implements UserService {
         if (patch.getEmail() != null) {
             user.setEmail(patch.getEmail());
         }
-        return userRepository.save(user);
+        return user;
     }
 }

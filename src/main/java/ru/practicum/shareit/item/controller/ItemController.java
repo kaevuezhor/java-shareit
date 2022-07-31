@@ -1,18 +1,25 @@
-package ru.practicum.shareit.item;
+package ru.practicum.shareit.item.controller;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
+import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.exception.AccessException;
+import ru.practicum.shareit.exception.NotBookedException;
 import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.exception.ValidationException;
+import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
+import ru.practicum.shareit.item.dto.ItemDtoService;
+import ru.practicum.shareit.item.dto.ItemDtoUserView;
 import ru.practicum.shareit.item.mapper.ItemMapper;
+import ru.practicum.shareit.item.model.Comment;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.service.ItemService;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -36,18 +43,22 @@ public class ItemController {
     }
 
     @GetMapping
-    public List<ItemDto> getAllItems(@RequestHeader ("X-Sharer-User-Id") int userId) {
+    public List<ItemDtoUserView> getAllItems(@RequestHeader ("X-Sharer-User-Id") int userId) {
         log.info("Запрошены все предметы пользователя {}", userId);
-        return itemService.getAllUserItems(userId)
-                .stream()
-                .map(ItemMapper::toItemDto)
+        List<ItemDtoService> foundItems = itemService.getAllUserItems(userId);
+        return foundItems.stream()
+                .map(ItemMapper::toItemDtoUserView)
                 .collect(Collectors.toList());
     }
 
     @GetMapping("/{itemId}")
-    public ItemDto getItem(@PathVariable int itemId) throws NotFoundException {
+    public ItemDtoUserView getItem(
+            @PathVariable int itemId,
+            @RequestHeader ("X-Sharer-User-Id") int userId
+    ) throws NotFoundException {
         log.info("Запрошен предмет id {}", itemId);
-        return ItemMapper.toItemDto(itemService.getItem(itemId));
+        ItemDtoService foundItem = itemService.getItem(itemId, userId);
+        return ItemMapper.toItemDtoUserView(foundItem);
     }
 
     @PostMapping
@@ -79,10 +90,28 @@ public class ItemController {
         itemService.deleteItem(itemId, userId);
     }
 
+    @PostMapping("/{itemId}/comment")
+    public CommentDto postComment(
+            @RequestHeader ("X-Sharer-User-Id") long userId,
+            @PathVariable long itemId,
+            @RequestBody Comment comment
+    ) throws ValidationException, NotFoundException, AccessException, NotBookedException {
+        log.info("Оставлен комментарий к предмету {} пользователем {}", itemId, userId);
+        if (isNotValidated(comment)) {
+            throw new ValidationException("Ошибка валидации");
+        }
+        return ItemMapper.toCommentDto(itemService.postComment(userId, itemId, comment));
+    }
+
     private boolean isNotValidated(Item item) {
         boolean isBlankName = !StringUtils.hasText(item.getName());
         boolean isBlankDescription = !StringUtils.hasText(item.getDescription());
         boolean isBlankAvailable = item.getAvailable() == null;
         return isBlankName || isBlankDescription || isBlankAvailable;
+    }
+
+    private boolean isNotValidated(Comment comment) {
+        boolean isBlankText = !StringUtils.hasText(comment.getText());
+        return isBlankText;
     }
 }

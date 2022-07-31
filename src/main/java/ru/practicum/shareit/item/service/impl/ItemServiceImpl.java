@@ -3,15 +3,22 @@ package ru.practicum.shareit.item.service.impl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.practicum.shareit.booking.model.Booking;
+import ru.practicum.shareit.booking.repository.BookingRepository;
 import ru.practicum.shareit.exception.AccessException;
+import ru.practicum.shareit.exception.NotBookedException;
 import ru.practicum.shareit.exception.NotFoundException;
+import ru.practicum.shareit.item.dto.ItemDtoService;
+import ru.practicum.shareit.item.model.Comment;
 import ru.practicum.shareit.item.model.Item;
+import ru.practicum.shareit.item.repository.CommentRepository;
 import ru.practicum.shareit.item.repository.ItemRepository;
 import ru.practicum.shareit.item.service.ItemService;
+import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.repository.UserRepository;
 
-import java.util.List;
-import java.util.Optional;
+import java.time.LocalDateTime;
+import java.util.*;
 
 @Slf4j
 @Service
@@ -21,26 +28,43 @@ public class ItemServiceImpl implements ItemService {
     private final ItemRepository itemRepository;
     private final UserRepository userRepository;
 
+    private final BookingRepository bookingRepository;
+
+    private final CommentRepository commentRepository;
+
     @Override
     public List<Item> searchItems(String text) {
         if (text.isBlank()) {
             return List.of();
         }
-        return itemRepository.findByDescriptionContainingIgnoreCaseOrNameContainingIgnoreCase(text, text);
+        return itemRepository.search(text);
     }
 
     @Override
-    public List<Item> getAllUserItems(long userId) {
-        return itemRepository.findByOwner(userId);
+    public List<ItemDtoService> getAllUserItems(long userId) {
+        List<Item> foundItems = itemRepository.findByOwner(userId);
+        List<ItemDtoService> foundItemsList = new ArrayList<>();
+        for (Item item : foundItems) {
+            List<Booking> itemBookings = bookingRepository.findByItemIdOrderByStart(item.getId());
+            List<Comment> itemComments = commentRepository.findAllByItemId(item.getId());
+            foundItemsList.add(new ItemDtoService(item, itemBookings, itemComments));
+        }
+        return foundItemsList;
     }
 
     @Override
-    public Item getItem(long itemId) throws NotFoundException {
+    public ItemDtoService getItem(long itemId, long userId) throws NotFoundException {
         Optional<Item> foundItem = itemRepository.findById(itemId);
         if (foundItem.isEmpty()) {
-            throw new NotFoundException("Предмет с id " + itemId + "не найден");
+            throw new NotFoundException("Предмет с id " + itemId + " не найден");
         }
-        return foundItem.get();
+        List<Booking> itemBookings = bookingRepository.findByItemIdOrderByStart(itemId);
+        if (foundItem.get().getOwner() != userId) {
+            itemBookings = List.of();
+        }
+        List<Comment> itemComments = commentRepository.findAllByItemId(itemId);
+        System.out.println(commentRepository.findAll());
+        return new ItemDtoService(foundItem.get(), itemBookings, itemComments);
     }
 
     @Override
@@ -78,6 +102,24 @@ public class ItemServiceImpl implements ItemService {
         itemRepository.deleteById(itemId);
     }
 
+    @Override
+    public Comment postComment(long userId, long itemId, Comment comment) throws NotFoundException, NotBookedException {
+        Optional<User> foundUser = userRepository.findById(userId);
+        if (foundUser.isEmpty()) {
+            throw new NotFoundException("Отсутсвует пользователь с id " + userId);
+        }
+        Optional<Item> foundItem = itemRepository.findById(itemId);
+        if (foundItem.isEmpty()) {
+            throw new NotFoundException("Предмет с id " + itemId + " не найден");
+        }
+        if (!isUserBookedItem(userId, itemId)) {
+            throw new NotBookedException("Пользователь " + userId + " не брал в аренду предмет "+ itemId);
+        }
+        comment.setAuthor(foundUser.get());
+        comment.setItem(foundItem.get());
+        return commentRepository.save(comment);
+    }
+
 
     private boolean isNotOwner(long itemId, long userId) {
         return itemRepository.getReferenceById(itemId).getOwner() != userId;
@@ -97,5 +139,17 @@ public class ItemServiceImpl implements ItemService {
             item.setRequest(patch.getRequest());
         }
         return itemRepository.save(item);
+    }
+
+    private boolean isUserBookedItem(long userId, long itemId) {
+        boolean isPastBooking = bookingRepository
+                .findUserPast(userId, LocalDateTime.now())
+                .stream()
+                .anyMatch(booking -> booking.getItem().getId() == itemId);
+        boolean isCurrentBooking = bookingRepository
+                .findUserCurrent(userId, LocalDateTime.now())
+                .stream()
+                .anyMatch(booking -> booking.getItem().getId() == itemId);
+        return isPastBooking || isCurrentBooking;
     }
 }
