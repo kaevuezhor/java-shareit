@@ -1,46 +1,38 @@
-package ru.practicum.shareit.item.model;
+package ru.practicum.shareit.requests.model;
 
 import lombok.*;
 import org.hibernate.Hibernate;
-import ru.practicum.shareit.requests.model.ItemRequest;
+import ru.practicum.shareit.user.model.User;
 
 import javax.persistence.*;
+import java.time.LocalDateTime;
 import java.util.Objects;
 
 @Getter
 @Setter
 @ToString
-@NoArgsConstructor
-@AllArgsConstructor
 @Entity
-@Table(name = "items")
-public class Item {
+@Table(name = "item_requests")
+@NoArgsConstructor
+public class ItemRequest {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column
-    private String name;
-
-    @Column
     private String description;
 
-    @Column
-    private Boolean available;
+    @ManyToOne
+    private User requester;
 
-    @Column(name = "owner_id")
-    private long owner;
-
-    @OneToOne
-    @JoinColumn(name = "request_id", referencedColumnName = "id")
-    private ItemRequest request;
+    private LocalDateTime created;
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
-        Item item = (Item) o;
-        return id != null && Objects.equals(id, item.id);
+        ItemRequest that = (ItemRequest) o;
+        return id != null && Objects.equals(id, that.id);
     }
 
     @Override

@@ -1,67 +1,84 @@
 package ru.practicum.shareit.item.service.impl;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import ru.practicum.shareit.booking.model.Booking;
+import ru.practicum.shareit.booking.repository.BookingRepository;
 import ru.practicum.shareit.exception.AccessException;
+import ru.practicum.shareit.exception.NotBookedException;
 import ru.practicum.shareit.exception.NotFoundException;
-import ru.practicum.shareit.item.dao.ItemDao;
-import ru.practicum.shareit.item.dto.ItemDto;
-import ru.practicum.shareit.item.mapper.ItemMapper;
+import ru.practicum.shareit.item.dto.ItemDtoService;
+import ru.practicum.shareit.item.model.Comment;
 import ru.practicum.shareit.item.model.Item;
+import ru.practicum.shareit.item.repository.CommentRepository;
+import ru.practicum.shareit.item.repository.ItemRepository;
 import ru.practicum.shareit.item.service.ItemService;
-import ru.practicum.shareit.user.dao.UserDao;
+import ru.practicum.shareit.user.model.User;
+import ru.practicum.shareit.user.repository.UserRepository;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
+import java.time.LocalDateTime;
+import java.util.*;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class ItemServiceImpl implements ItemService {
 
-    private final ItemDao itemDao;
-    private final UserDao userDao;
+    private final ItemRepository itemRepository;
+    private final UserRepository userRepository;
 
-    @Autowired
-    public ItemServiceImpl(ItemDao itemDao, UserDao userDao) {
-        this.itemDao = itemDao;
-        this.userDao = userDao;
-    }
+    private final BookingRepository bookingRepository;
+
+    private final CommentRepository commentRepository;
 
     @Override
-    public List<ItemDto> searchItems(String text) {
+    public List<Item> searchItems(String text) {
         if (text.isBlank()) {
             return List.of();
         }
-        return itemDao.getSearchedItems(text).stream()
-                .map(ItemMapper::toItemDto)
-                .collect(Collectors.toList());
+        return itemRepository.search(text);
     }
 
     @Override
-    public List<ItemDto> getAllUserItems(int userId) {
-        return itemDao.getAllItems(userId).stream()
-                .map(ItemMapper::toItemDto)
-                .collect(Collectors.toList());
+    public List<ItemDtoService> getAllUserItems(long userId) {
+        List<Item> foundItems = itemRepository.findByOwner(userId);
+        List<ItemDtoService> foundItemsList = new ArrayList<>();
+        for (Item item : foundItems) {
+            List<Booking> itemBookings = bookingRepository.findByItemIdOrderByStart(item.getId());
+            List<Comment> itemComments = commentRepository.findAllByItemId(item.getId());
+            foundItemsList.add(new ItemDtoService(item, itemBookings, itemComments));
+        }
+        return foundItemsList;
     }
 
     @Override
-    public Optional<ItemDto> getItem(int itemId) {
-        return Optional.of(ItemMapper.toItemDto(itemDao.getItem(itemId)));
+    public ItemDtoService getItem(long itemId, long userId) throws NotFoundException {
+        Optional<Item> foundItem = itemRepository.findById(itemId);
+        if (foundItem.isEmpty()) {
+            throw new NotFoundException("Предмет с id " + itemId + " не найден");
+        }
+        List<Booking> itemBookings = bookingRepository.findByItemIdOrderByStart(itemId);
+        if (foundItem.get().getOwner() != userId) {
+            itemBookings = List.of();
+        }
+        List<Comment> itemComments = commentRepository.findAllByItemId(itemId);
+        System.out.println(commentRepository.findAll());
+        return new ItemDtoService(foundItem.get(), itemBookings, itemComments);
     }
 
     @Override
-    public ItemDto createItem(Item item, int userId) throws NotFoundException {
-        if (userDao.getUser(userId) == null) {
+    public Item createItem(Item item, long userId) throws NotFoundException {
+        if (userRepository.findById(userId).isEmpty()) {
             throw new NotFoundException("Отсутсвует пользователь с id " + userId);
         }
-        return ItemMapper.toItemDto(itemDao.createItem(item, userId));
+        item.setOwner(userId);
+        return itemRepository.save(item);
     }
 
     @Override
-    public Optional<ItemDto> updateItem(int itemId, Item item, int userId) throws NotFoundException, AccessException {
-        if (userDao.getUser(userId) == null) {
+    public Item updateItem(long itemId, Item item, long userId) throws NotFoundException, AccessException {
+        if (userRepository.findById(userId).isEmpty()) {
             throw new NotFoundException("Отсутсвует пользователь с id " + userId);
         }
         if (isNotOwner(itemId, userId)) {
@@ -69,12 +86,12 @@ public class ItemServiceImpl implements ItemService {
                     String.format("Пользователь %s не является владельцем предмета %s", userId, itemId)
             );
         }
-        return Optional.of(ItemMapper.toItemDto(itemDao.updateItem(itemId, item)));
+        return patchItem(item, itemRepository.getReferenceById(itemId));
     }
 
     @Override
-    public Optional<ItemDto> deleteItem(int itemId, int userId) throws AccessException, NotFoundException {
-        if (userDao.getUser(userId) == null) {
+    public void deleteItem(long itemId, long userId) throws AccessException, NotFoundException {
+        if (userRepository.findById(userId).isEmpty()) {
             throw new NotFoundException("Отсутсвует пользователь с id " + userId);
         }
         if (isNotOwner(itemId, userId)) {
@@ -82,11 +99,57 @@ public class ItemServiceImpl implements ItemService {
                     String.format("Пользователь %s не является владельцем предмета %s", userId, itemId)
             );
         }
-        return Optional.of(ItemMapper.toItemDto(itemDao.deleteItem(itemId)));
+        itemRepository.deleteById(itemId);
+    }
+
+    @Override
+    public Comment postComment(long userId, long itemId, Comment comment) throws NotFoundException, NotBookedException {
+        Optional<User> foundUser = userRepository.findById(userId);
+        if (foundUser.isEmpty()) {
+            throw new NotFoundException("Отсутсвует пользователь с id " + userId);
+        }
+        Optional<Item> foundItem = itemRepository.findById(itemId);
+        if (foundItem.isEmpty()) {
+            throw new NotFoundException("Предмет с id " + itemId + " не найден");
+        }
+        if (!isUserBookedItem(userId, itemId)) {
+            throw new NotBookedException("Пользователь " + userId + " не брал в аренду предмет " + itemId);
+        }
+        comment.setAuthor(foundUser.get());
+        comment.setItem(foundItem.get());
+        return commentRepository.save(comment);
     }
 
 
-    private boolean isNotOwner(int itemId, int userId) {
-        return itemDao.getItem(itemId).getOwner() != userId;
+    private boolean isNotOwner(long itemId, long userId) {
+        return itemRepository.getReferenceById(itemId).getOwner() != userId;
+    }
+
+    private Item patchItem(Item patch, Item item) {
+        if (patch.getName() != null) {
+            item.setName(patch.getName());
+        }
+        if (patch.getDescription() != null) {
+            item.setDescription(patch.getDescription());
+        }
+        if (patch.getAvailable() != null) {
+            item.setAvailable(patch.getAvailable());
+        }
+        if (patch.getRequest() != null) {
+            item.setRequest(patch.getRequest());
+        }
+        return itemRepository.save(item);
+    }
+
+    private boolean isUserBookedItem(long userId, long itemId) {
+        boolean isPastBooking = bookingRepository
+                .findUserPast(userId, LocalDateTime.now())
+                .stream()
+                .anyMatch(booking -> booking.getItem().getId() == itemId);
+        boolean isCurrentBooking = bookingRepository
+                .findUserCurrent(userId, LocalDateTime.now())
+                .stream()
+                .anyMatch(booking -> booking.getItem().getId() == itemId);
+        return isPastBooking || isCurrentBooking;
     }
 }
