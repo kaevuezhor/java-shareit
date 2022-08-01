@@ -1,7 +1,7 @@
 package ru.practicum.shareit.user.controller;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.exception.AlreadyExistsException;
@@ -19,19 +19,16 @@ import java.util.stream.Collectors;
 @Slf4j
 @RestController
 @RequestMapping(path = "/users")
+@RequiredArgsConstructor
 public class UserController {
 
     private final UserService userService;
-
-    @Autowired
-    public UserController(UserService userService) {
-        this.userService = userService;
-    }
+    private final UserMapper userMapper;
 
     @GetMapping("/{id}")
     public UserDto getUser(@PathVariable int id) throws NotFoundException {
         log.info("Запрошен пользователь id {}", id);
-        return UserMapper.toUserDto(userService.getUser(id));
+        return userMapper.toUserDto(userService.getUser(id));
     }
 
     @GetMapping
@@ -39,7 +36,7 @@ public class UserController {
         log.info("Запрошен список всех пользователей");
         return userService.getAllUsers()
                 .stream()
-                .map(UserMapper::toUserDto)
+                .map(userMapper::toUserDto)
                 .collect(Collectors.toList());
     }
 
@@ -49,7 +46,7 @@ public class UserController {
             throw new ValidationException("Ошибка валидации");
         }
         log.info("Создан пользователь {}", user);
-        return UserMapper.toUserDto(userService.createUser(user));
+        return userMapper.toUserDto(userService.createUser(user));
     }
 
     @PatchMapping("/{id}")
@@ -57,7 +54,7 @@ public class UserController {
                               @Valid @RequestBody User user
     ) throws AlreadyExistsException, NotFoundException {
         log.info("Обновлен пользователь id {}", id);
-        return UserMapper.toUserDto(userService.updateUser(id, user));
+        return userMapper.toUserDto(userService.updateUser(id, user));
     }
 
     @DeleteMapping("/{id}")

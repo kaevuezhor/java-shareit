@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 public class BookingController {
 
     private final BookingService bookingService;
+    private final BookingMapper bookingMapper;
 
     @PostMapping
     public BookingDto createBooking(
@@ -32,7 +33,7 @@ public class BookingController {
     ) throws NotFoundException, ValidationException, UnavailableException, AccessException {
         Booking savedBooking = bookingService.createBooking(booking, userId);
         log.info("Создан запрос аренды {}", booking);
-        return BookingMapper.toBookingDto(savedBooking);
+        return bookingMapper.toBookingDto(savedBooking);
     }
 
     @PatchMapping("/{bookingId}")
@@ -43,17 +44,20 @@ public class BookingController {
             ) throws NotFoundException, NotOwnerException, AlreadyApprovedException {
         Booking patchedBooking = bookingService.approveBooking(bookingId, approved, userId);
         log.info("Изменен статус запроса на бронирование {} на {}", bookingId, approved);
-        return BookingMapper.toBookingDto(patchedBooking);
+        return bookingMapper.toBookingDto(patchedBooking);
     }
 
     @GetMapping("/{bookingId}")
     public BookingDto findBooking(
             @PathVariable long bookingId,
             @RequestHeader("X-Sharer-User-Id") long userId
-    ) throws NotFoundException, AccessException {
+    ) throws Throwable {
         Booking foundBooking = bookingService.findBooking(bookingId, userId);
+        if (!hasViewAccess(foundBooking, userId)) {
+            throw new AccessException("Ошибка доступа");
+        }
         log.info("Просмотрен запрос на бронирование {} пользователем {}", bookingId, userId);
-        return BookingMapper.toBookingDto(foundBooking);
+        return bookingMapper.toBookingDto(foundBooking);
     }
 
     @GetMapping
@@ -65,7 +69,7 @@ public class BookingController {
         log.info("Запрошены бронирования пользователя {} в статусе {}",  userId, state);
         return foundBookings
                 .stream()
-                .map(BookingMapper::toBookingDto)
+                .map(bookingMapper::toBookingDto)
                 .collect(Collectors.toList());
     }
 
@@ -78,7 +82,12 @@ public class BookingController {
         log.info("Запрошены бронирования вещей пользователя {} в статусе {}",  userId, state);
         return foundBookings
                 .stream()
-                .map(BookingMapper::toBookingDto)
+                .map(bookingMapper::toBookingDto)
                 .collect(Collectors.toList());
+    }
+
+    private boolean hasViewAccess(Booking booking, long id) {
+        return List.of(booking.getItem().getOwner(), booking.getBooker().getId())
+                .contains(id);
     }
 }

@@ -1,6 +1,8 @@
 package ru.practicum.shareit.exception;
 
-public class NotFoundException extends Exception {
+import java.util.function.Supplier;
+
+public class NotFoundException extends Exception{
     public NotFoundException(String message) {
         super(message);
     }

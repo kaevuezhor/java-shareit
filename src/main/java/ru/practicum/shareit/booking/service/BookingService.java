@@ -13,7 +13,7 @@ public interface BookingService {
 
     Booking approveBooking(long bookingId, boolean approved, long userId) throws NotFoundException, NotOwnerException, AlreadyApprovedException;
 
-    Booking findBooking(long bookingId, long userId) throws NotFoundException, AccessException;
+    Booking findBooking(long bookingId, long userId) throws Throwable;
 
     List<Booking> findUserBookingsByState(long userId, BookingState state);
 

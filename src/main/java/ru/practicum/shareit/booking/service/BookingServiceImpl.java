@@ -16,6 +16,7 @@ import java.time.LocalDateTime;
 import java.time.chrono.ChronoLocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import static ru.practicum.shareit.booking.model.BookingStatus.*;
 
@@ -80,15 +81,9 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public Booking findBooking(long bookingId, long userId) throws NotFoundException, AccessException {
+    public Booking findBooking(long bookingId, long userId) throws Throwable {
         Optional<Booking> booking = bookingRepository.findById(bookingId);
-        if (booking.isEmpty()) {
-            throw new NotFoundException("Запроса на бронирование id " + bookingId + " не найден");
-        }
-        if (!hasViewAccess(booking.get(), userId)) {
-            throw new AccessException("Ошибка доступа");
-        }
-        return booking.get();
+        return booking.orElseThrow((Supplier<Throwable>) () -> new NotFoundException("Запроса на бронирование id " + bookingId + " не найден"));
     }
 
     @Override
@@ -132,11 +127,6 @@ public class BookingServiceImpl implements BookingService {
             booking.setStatus(REJECTED);
         }
         return bookingRepository.save(booking);
-    }
-
-    private boolean hasViewAccess(Booking booking, long id) {
-        return List.of(booking.getItem().getOwner(), booking.getBooker().getId())
-                .contains(id);
     }
 
     private boolean isUnavailable(Item item) {

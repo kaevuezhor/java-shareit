@@ -1,5 +1,6 @@
 package ru.practicum.shareit.item.mapper;
 
+import org.springframework.stereotype.Component;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.dto.BookingDtoItem;
 import ru.practicum.shareit.item.dto.CommentDto;
@@ -15,8 +16,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+@Component
 public class ItemMapper {
-    public static ItemDto toItemDto(Item item) {
+    public ItemDto toItemDto(Item item) {
         return new ItemDto(
                 item.getId(),
                 item.getName(),
@@ -26,7 +28,7 @@ public class ItemMapper {
         );
     }
 
-    public static ItemDtoUserView toItemDtoUserView(ItemDtoService itemDtoService) {
+    public ItemDtoUserView toItemDtoUserView(ItemDtoService itemDtoService) {
         Item item = itemDtoService.getItem();
         List<Booking> bookings = itemDtoService.getBookings();
         List<Comment> comments = itemDtoService.getComments();
@@ -45,7 +47,7 @@ public class ItemMapper {
             nextBookingDto.setBookerId(nextBooking.get().getBooker().getId());
         }
         List<CommentDto> commentsDto = comments.stream()
-                .map(ItemMapper::toCommentDto)
+                .map(this::toCommentDto)
                 .collect(Collectors.toList());
         return new ItemDtoUserView(
                 item.getId(),
@@ -58,7 +60,7 @@ public class ItemMapper {
         );
     }
 
-    public static CommentDto toCommentDto(Comment comment) {
+    public CommentDto toCommentDto(Comment comment) {
         CommentDto commentDto = new CommentDto(
                 comment.getId(),
                 comment.getText(),
@@ -68,12 +70,12 @@ public class ItemMapper {
         return commentDto;
     }
 
-    private static Optional<Booking> getLastBooking(List<Booking> bookings, Item item) {
+    private Optional<Booking> getLastBooking(List<Booking> bookings, Item item) {
         return bookings.stream()
                 .filter(b -> b.getEnd().isBefore(ChronoLocalDateTime.from(LocalDateTime.now()))).findFirst();
     }
 
-    private static Optional<Booking> getNextBooking(List<Booking> bookings, Item item) {
+    private Optional<Booking> getNextBooking(List<Booking> bookings, Item item) {
         return bookings.stream()
                 .filter(b -> b.getEnd().isAfter(ChronoLocalDateTime.from(LocalDateTime.now()))).findFirst();
     }

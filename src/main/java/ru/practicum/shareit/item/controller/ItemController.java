@@ -1,7 +1,7 @@
 package ru.practicum.shareit.item.controller;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.exception.AccessException;
@@ -23,20 +23,17 @@ import java.util.stream.Collectors;
 @Slf4j
 @RestController
 @RequestMapping("/items")
+@RequiredArgsConstructor
 public class ItemController {
 
     private final ItemService itemService;
-
-    @Autowired
-    public ItemController(ItemService itemService) {
-        this.itemService = itemService;
-    }
+    private final ItemMapper itemMapper;
 
     @GetMapping("/search")
     public List<ItemDto> searchItems(@RequestParam String text) {
         return itemService.searchItems(text)
                 .stream()
-                .map(ItemMapper::toItemDto)
+                .map(itemMapper::toItemDto)
                 .collect(Collectors.toList());
     }
 
@@ -45,7 +42,7 @@ public class ItemController {
         log.info("Запрошены все предметы пользователя {}", userId);
         List<ItemDtoService> foundItems = itemService.getAllUserItems(userId);
         return foundItems.stream()
-                .map(ItemMapper::toItemDtoUserView)
+                .map(itemMapper::toItemDtoUserView)
                 .collect(Collectors.toList());
     }
 
@@ -56,7 +53,7 @@ public class ItemController {
     ) throws NotFoundException {
         log.info("Запрошен предмет id {}", itemId);
         ItemDtoService foundItem = itemService.getItem(itemId, userId);
-        return ItemMapper.toItemDtoUserView(foundItem);
+        return itemMapper.toItemDtoUserView(foundItem);
     }
 
     @PostMapping
@@ -67,7 +64,7 @@ public class ItemController {
             throw new ValidationException("Ошибка валидации");
         }
         log.info("Создан предмет {} пользователем {}", item, userId);
-        return ItemMapper.toItemDto(itemService.createItem(item, userId));
+        return itemMapper.toItemDto(itemService.createItem(item, userId));
     }
 
     @PatchMapping("/{itemId}")
@@ -77,7 +74,7 @@ public class ItemController {
     ) throws NotFoundException, AccessException {
         log.info("Обновлен предмет {} пользователем {},\n"
         + "Обновлено: {}", itemId, userId, item);
-        return ItemMapper.toItemDto(itemService.updateItem(itemId, item, userId));
+        return itemMapper.toItemDto(itemService.updateItem(itemId, item, userId));
     }
 
     @DeleteMapping("/{itemId}")
@@ -98,7 +95,7 @@ public class ItemController {
         if (isNotValidated(comment)) {
             throw new ValidationException("Ошибка валидации");
         }
-        return ItemMapper.toCommentDto(itemService.postComment(userId, itemId, comment));
+        return itemMapper.toCommentDto(itemService.postComment(userId, itemId, comment));
     }
 
     private boolean isNotValidated(Item item) {

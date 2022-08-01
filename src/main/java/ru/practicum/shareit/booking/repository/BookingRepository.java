@@ -11,61 +11,61 @@ import java.util.List;
 public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     @Query("select b from Booking b " +
-            "where b.item.owner = ?1 " +
+            "where b.item.owner = :userId " +
             "order by b.start desc")
     List<Booking> findByOwner(long userId);
 
     @Query("select b from Booking b " +
-            "where b.item.owner = ?1 " +
-            "and ?2 between b.start and b.end " +
+            "where b.item.owner = :userId " +
+            "and :currentTime between b.start and b.end " +
             "order by b.start desc")
     List<Booking> findCurrentByOwner(long userId, LocalDateTime currentTime);
 
     @Query("select b from Booking b " +
-            "where b.item.owner = ?1 " +
-            "and ?2 > b.end " +
+            "where b.item.owner = :userId " +
+            "and :currentTime > b.end " +
             "order by b.start desc")
     List<Booking> findPastByOwner(long userId, LocalDateTime currentTime);
 
     @Query("select b from Booking b " +
-            "where b.item.owner = ?1 " +
-            "and ?2 < b.start " +
+            "where b.item.owner = :userId " +
+            "and :currentTime < b.start " +
             "order by b.start desc")
     List<Booking> findFutureByOwner(long userId, LocalDateTime currentTime);
 
     @Query("select b from Booking b " +
-            "where b.item.owner = ?1 " +
-            "and b.status = ?2 " +
+            "where b.item.owner = :userId " +
+            "and b.status = :status " +
             "order by b.start desc")
     List<Booking> findByOwnerAndStatus(long userId, BookingState status);
 
     @Query("select b from Booking b " +
-            "where b.booker.id = ?1 " +
+            "where b.booker.id = :userId " +
             "and not b.status = 'REJECTED' " +
             "order by b.start desc")
     List<Booking> findByUserId(long userId);
 
     @Query("select b from Booking b " +
-            "where b.booker.id = ?1 " +
-            "and ?2 between b.start and b.end " +
+            "where b.booker.id = :userId " +
+            "and :currentTime between b.start and b.end " +
             "order by b.start desc")
     List<Booking> findUserCurrent(long userId, LocalDateTime currentTime);
 
     @Query("select b from Booking b " +
-            "where b.booker.id = ?1 " +
-            "and ?2 > b.end " +
+            "where b.booker.id = :userId " +
+            "and :currentTime > b.end " +
             "order by b.start desc")
     List<Booking> findUserPast(long userId, LocalDateTime currentTime);
 
     @Query("select b from Booking b " +
-            "where b.booker.id = ?1 " +
-            "and ?2 < b.start " +
+            "where b.booker.id = :userId " +
+            "and :currentTime < b.start " +
             "order by b.start desc")
     List<Booking> findUserFuture(long userId, LocalDateTime currentTime);
 
     @Query("select b from Booking b " +
-            "where b.booker.id = ?1 " +
-            "and b.status = ?2 " +
+            "where b.booker.id = :userId " +
+            "and b.status = :status " +
             "order by b.start desc")
     List<Booking> findUserByStatus(long userId, BookingState status);
 
