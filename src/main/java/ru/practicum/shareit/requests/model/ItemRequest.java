@@ -14,6 +14,7 @@ import java.util.Objects;
 @Entity
 @Table(name = "item_requests")
 @NoArgsConstructor
+@AllArgsConstructor
 public class ItemRequest {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -25,7 +26,7 @@ public class ItemRequest {
     @ManyToOne
     private User requester;
 
-    private LocalDateTime created;
+    private LocalDateTime created = LocalDateTime.now();
 
     @Override
     public boolean equals(Object o) {

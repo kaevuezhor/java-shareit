@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.model.BookingState;
 import ru.practicum.shareit.booking.dto.BookingDtoCreate;
+import ru.practicum.shareit.booking.model.BookingStatus;
 import ru.practicum.shareit.booking.repository.BookingRepository;
 import ru.practicum.shareit.exception.*;
 import ru.practicum.shareit.item.model.Item;
@@ -82,12 +83,20 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public Booking findBooking(long bookingId, long userId) throws Throwable {
+        Optional<User> owner = userRepository.findById(userId);
+        if (owner.isEmpty()) {
+            throw new NotFoundException("Пользователь id " + userId + " не найден");
+        }
         Optional<Booking> booking = bookingRepository.findById(bookingId);
         return booking.orElseThrow((Supplier<Throwable>) () -> new NotFoundException("Запроса на бронирование id " + bookingId + " не найден"));
     }
 
     @Override
-    public List<Booking> findUserBookingsByState(long userId, BookingState state) {
+    public List<Booking> findUserBookingsByState(long userId, BookingState state) throws NotFoundException, ValidationException {
+        Optional<User> user = userRepository.findById(userId);
+        if (user.isEmpty()) {
+            throw new NotFoundException("Пользователь id " + userId + " не найден");
+        }
         switch (state) {
             case CURRENT:
                 return bookingRepository.findUserCurrent(userId, LocalDateTime.now());
@@ -97,14 +106,20 @@ public class BookingServiceImpl implements BookingService {
                 return bookingRepository.findUserFuture(userId, LocalDateTime.now());
             case WAITING:
             case REJECTED:
-                return bookingRepository.findUserByStatus(userId, state);
-            default:
+                return bookingRepository.findUserByStatus(userId, BookingStatus.valueOf(String.valueOf(state)));
+            case ALL:
                 return bookingRepository.findByUserId(userId);
+            default:
+                throw new ValidationException("Ошибка в статусе");
         }
     }
 
     @Override
-    public List<Booking> findOwnerBookingsByState(long userId, BookingState state) {
+    public List<Booking> findOwnerBookingsByState(long userId, BookingState state) throws NotFoundException, ValidationException {
+        Optional<User> owner = userRepository.findById(userId);
+        if (owner.isEmpty()) {
+            throw new NotFoundException("Пользователь id " + userId + " не найден");
+        }
         switch (state) {
             case CURRENT:
                 return bookingRepository.findCurrentByOwner(userId, LocalDateTime.now());
@@ -114,9 +129,11 @@ public class BookingServiceImpl implements BookingService {
                 return bookingRepository.findFutureByOwner(userId, LocalDateTime.now());
             case WAITING:
             case REJECTED:
-                return bookingRepository.findByOwnerAndStatus(userId, state);
-            default:
+                return bookingRepository.findByOwnerAndStatus(userId, BookingStatus.valueOf(String.valueOf(state)));
+            case ALL:
                 return bookingRepository.findByOwner(userId);
+            default:
+                throw new ValidationException("Ошибка в статусе");
         }
     }
 
