@@ -1,6 +1,8 @@
 package ru.practicum.shareit.booking.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.model.BookingState;
@@ -92,46 +94,48 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public List<Booking> findUserBookingsByState(long userId, BookingState state) throws NotFoundException, ValidationException {
+    public List<Booking> findUserBookingsByState(long userId, BookingState state, int from, int size) throws NotFoundException, ValidationException {
         Optional<User> user = userRepository.findById(userId);
         if (user.isEmpty()) {
             throw new NotFoundException("Пользователь id " + userId + " не найден");
         }
+        PageRequest pageRequest = PageRequest.of(from, size, Sort.by(Sort.Order.desc("start")));
         switch (state) {
             case CURRENT:
-                return bookingRepository.findUserCurrent(userId, LocalDateTime.now());
+                return bookingRepository.findUserCurrent(userId, LocalDateTime.now(), pageRequest);
             case PAST:
-                return bookingRepository.findUserPast(userId, LocalDateTime.now());
+                return bookingRepository.findUserPast(userId, LocalDateTime.now(), pageRequest);
             case FUTURE:
-                return bookingRepository.findUserFuture(userId, LocalDateTime.now());
+                return bookingRepository.findUserFuture(userId, LocalDateTime.now(), pageRequest);
             case WAITING:
             case REJECTED:
-                return bookingRepository.findUserByStatus(userId, BookingStatus.valueOf(String.valueOf(state)));
+                return bookingRepository.findUserByStatus(userId, BookingStatus.valueOf(String.valueOf(state)), pageRequest);
             case ALL:
-                return bookingRepository.findByUserId(userId);
+                return bookingRepository.findByUserId(userId, pageRequest);
             default:
                 throw new ValidationException("Ошибка в статусе");
         }
     }
 
     @Override
-    public List<Booking> findOwnerBookingsByState(long userId, BookingState state) throws NotFoundException, ValidationException {
+    public List<Booking> findOwnerBookingsByState(long userId, BookingState state, int from, int size) throws NotFoundException, ValidationException {
         Optional<User> owner = userRepository.findById(userId);
         if (owner.isEmpty()) {
             throw new NotFoundException("Пользователь id " + userId + " не найден");
         }
+        PageRequest pageRequest = PageRequest.of(from, size, Sort.by(Sort.Order.desc("start")));
         switch (state) {
             case CURRENT:
-                return bookingRepository.findCurrentByOwner(userId, LocalDateTime.now());
+                return bookingRepository.findCurrentByOwner(userId, LocalDateTime.now(), pageRequest);
             case PAST:
-                return bookingRepository.findPastByOwner(userId, LocalDateTime.now());
+                return bookingRepository.findPastByOwner(userId, LocalDateTime.now(), pageRequest);
             case FUTURE:
-                return bookingRepository.findFutureByOwner(userId, LocalDateTime.now());
+                return bookingRepository.findFutureByOwner(userId, LocalDateTime.now(), pageRequest);
             case WAITING:
             case REJECTED:
-                return bookingRepository.findByOwnerAndStatus(userId, BookingStatus.valueOf(String.valueOf(state)));
+                return bookingRepository.findByOwnerAndStatus(userId, BookingStatus.valueOf(String.valueOf(state)), pageRequest);
             case ALL:
-                return bookingRepository.findByOwner(userId);
+                return bookingRepository.findByOwner(userId, pageRequest);
             default:
                 throw new ValidationException("Ошибка в статусе");
         }

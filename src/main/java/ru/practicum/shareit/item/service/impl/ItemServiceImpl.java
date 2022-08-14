@@ -2,18 +2,23 @@ package ru.practicum.shareit.item.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.repository.BookingRepository;
 import ru.practicum.shareit.exception.AccessException;
 import ru.practicum.shareit.exception.NotBookedException;
 import ru.practicum.shareit.exception.NotFoundException;
+import ru.practicum.shareit.item.dto.ItemDtoCreated;
 import ru.practicum.shareit.item.dto.ItemDtoService;
 import ru.practicum.shareit.item.model.Comment;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.repository.CommentRepository;
 import ru.practicum.shareit.item.repository.ItemRepository;
 import ru.practicum.shareit.item.service.ItemService;
+import ru.practicum.shareit.requests.model.ItemRequest;
+import ru.practicum.shareit.requests.repository.ItemRequestRepository;
 import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.repository.UserRepository;
 
@@ -32,17 +37,19 @@ public class ItemServiceImpl implements ItemService {
 
     private final CommentRepository commentRepository;
 
+    private final ItemRequestRepository requestRepository;
+
     @Override
-    public List<Item> searchItems(String text) {
+    public List<Item> searchItems(String text, int from, int size) {
         if (text.isBlank()) {
             return List.of();
         }
-        return itemRepository.search(text);
+        return itemRepository.search(text, PageRequest.of(from, size, Sort.by(Sort.Order.asc("id"))));
     }
 
     @Override
-    public List<ItemDtoService> getAllUserItems(long userId) {
-        List<Item> foundItems = itemRepository.findByOwner(userId);
+    public List<ItemDtoService> getAllUserItems(long userId, int from, int size) {
+        List<Item> foundItems = itemRepository.findByOwner(userId, PageRequest.of(from, size, Sort.by(Sort.Order.asc("id"))));
         List<ItemDtoService> foundItemsList = new ArrayList<>();
         for (Item item : foundItems) {
             List<Booking> itemBookings = bookingRepository.findByItemIdOrderByStart(item.getId());
@@ -68,12 +75,23 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public Item createItem(Item item, long userId) throws NotFoundException {
+    public Item createItem(ItemDtoCreated item, long userId) throws NotFoundException {
         if (userRepository.findById(userId).isEmpty()) {
             throw new NotFoundException("Отсутсвует пользователь с id " + userId);
         }
-        item.setOwner(userId);
-        return itemRepository.save(item);
+        ItemRequest linkedRequest;
+        if (item.getRequestId() == null) {
+            linkedRequest = null;
+        } else {
+            linkedRequest = requestRepository.getReferenceById(item.getRequestId());
+        }
+        Item creatingItem = new Item();
+        creatingItem.setName(item.getName());
+        creatingItem.setDescription(item.getDescription());
+        creatingItem.setAvailable(item.getAvailable());
+        creatingItem.setOwner(userId);
+        creatingItem.setRequest(linkedRequest);
+        return itemRepository.save(creatingItem);
     }
 
     @Override

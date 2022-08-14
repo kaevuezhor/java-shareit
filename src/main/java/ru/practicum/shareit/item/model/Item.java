@@ -31,7 +31,7 @@ public class Item {
     @Column(name = "owner_id")
     private long owner;
 
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "request_id", referencedColumnName = "id")
     private ItemRequest request;
 

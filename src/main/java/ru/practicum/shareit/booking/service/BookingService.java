@@ -15,7 +15,7 @@ public interface BookingService {
 
     Booking findBooking(long bookingId, long userId) throws Throwable;
 
-    List<Booking> findUserBookingsByState(long userId, BookingState state) throws NotFoundException, ValidationException;
+    List<Booking> findUserBookingsByState(long userId, BookingState state, int from, int size) throws NotFoundException, ValidationException;
 
-    List<Booking> findOwnerBookingsByState(long userId, BookingState state) throws NotFoundException, ValidationException;
+    List<Booking> findOwnerBookingsByState(long userId, BookingState state, int from, int size) throws NotFoundException, ValidationException;
 }

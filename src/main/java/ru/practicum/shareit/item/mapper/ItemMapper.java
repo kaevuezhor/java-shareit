@@ -19,12 +19,19 @@ import java.util.stream.Collectors;
 @Component
 public class ItemMapper {
     public ItemDto toItemDto(Item item) {
+        Long requestId;
+        if (item.getRequest() != null) {
+            requestId = item.getRequest().getId();
+        } else {
+            requestId = null;
+        }
         return new ItemDto(
                 item.getId(),
                 item.getName(),
                 item.getDescription(),
                 item.getAvailable(),
-                item.getRequest() != null ? item.getRequest().getId() : null
+                //item.getRequest() != null ? item.getRequest().getId() : null
+                requestId
         );
     }
 

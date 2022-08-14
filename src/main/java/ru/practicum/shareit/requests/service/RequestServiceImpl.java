@@ -1,9 +1,13 @@
 package ru.practicum.shareit.requests.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.exception.ValidationException;
+import ru.practicum.shareit.item.repository.ItemRepository;
+import ru.practicum.shareit.requests.dto.ItemRequestServiceDto;
 import ru.practicum.shareit.requests.model.ItemRequest;
 import ru.practicum.shareit.requests.repository.ItemRequestRepository;
 import ru.practicum.shareit.user.model.User;
@@ -11,6 +15,7 @@ import ru.practicum.shareit.user.repository.UserRepository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -18,6 +23,7 @@ public class RequestServiceImpl implements RequestService{
 
     private final UserRepository userRepository;
     private final ItemRequestRepository requestRepository;
+    private final ItemRepository itemRepository;
 
     @Override
     public ItemRequest createRequest(ItemRequest itemRequest, long userId) throws NotFoundException, ValidationException {
@@ -33,21 +39,47 @@ public class RequestServiceImpl implements RequestService{
     }
 
     @Override
-    public List<ItemRequest> findAllByRequester(long userId) throws NotFoundException {
+    public List<ItemRequestServiceDto> findAllByRequester(long userId) throws NotFoundException {
         Optional<User> user = userRepository.findById(userId);
         if (user.isEmpty()) {
             throw new NotFoundException("Пользователь " + userId + " не найден");
         }
-        return requestRepository.findAllByRequesterId(userId);
+        return requestRepository.findAllByRequesterId(userId)
+                .stream()
+                .map(r -> new ItemRequestServiceDto(r, itemRepository.findAllByRequestId(r.getId())))
+                .collect(Collectors.toList());
     }
 
     @Override
-    public List<ItemRequest> findAll(int from, int size) {
-        return null;
+    public List<ItemRequestServiceDto> findAll(int from, int size, long userId) throws ValidationException, NotFoundException {
+        if (from < 0 || size <= 0) {
+            throw new ValidationException("Ошибка в параметрах запроса");
+        }
+        Optional<User> user = userRepository.findById(userId);
+        if (user.isEmpty()) {
+            throw new NotFoundException("Пользователь " + userId + " не найден");
+        }
+        return requestRepository.findAll(PageRequest.of(from, size, Sort.by(Sort.Order.desc("created"))), userId)
+                .stream()
+                .map(r -> new ItemRequestServiceDto(r, itemRepository.findAllByRequestId(r.getId())))
+                .collect(Collectors.toList());
     }
 
     @Override
-    public ItemRequest findById(long id) {
-        return null;
+    public ItemRequestServiceDto findById(long id, long userId) throws Throwable {
+        Optional<User> user = userRepository.findById(userId);
+        if (user.isEmpty()) {
+            throw new NotFoundException("Пользователь " + userId + " не найден");
+        }
+        Optional<ItemRequest> foundRequest = requestRepository.findById(id);
+        if (foundRequest.isEmpty()) {
+            throw new NotFoundException("Запрос " + id + " не найден");
+        }
+        ItemRequest request = foundRequest.get();
+        System.out.println(itemRepository.findAllByRequestId(request.getId()));
+        return new ItemRequestServiceDto(
+                request,
+                itemRepository.findAllByRequestId(request.getId())
+        );
     }
 }

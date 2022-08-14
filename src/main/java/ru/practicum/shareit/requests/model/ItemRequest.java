@@ -2,10 +2,12 @@ package ru.practicum.shareit.requests.model;
 
 import lombok.*;
 import org.hibernate.Hibernate;
+import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.model.User;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Objects;
 
 @Getter
@@ -24,8 +26,10 @@ public class ItemRequest {
     private String description;
 
     @ManyToOne
+    @JoinColumn(name = "requester_id", referencedColumnName = "id")
     private User requester;
 
+    @Column
     private LocalDateTime created = LocalDateTime.now();
 
     @Override
