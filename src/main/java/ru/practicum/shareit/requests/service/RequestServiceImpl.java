@@ -31,7 +31,7 @@ public class RequestServiceImpl implements RequestService{
         if (user.isEmpty()) {
             throw new NotFoundException("Пользователь " + userId + " не найден");
         }
-        if (itemRequest.getDescription() == null) {
+        if (itemRequest.getDescription() == null || itemRequest.getDescription().isBlank()) {
             throw new ValidationException("Отсутствует описание");
         }
         itemRequest.setRequester(user.get());
@@ -76,7 +76,7 @@ public class RequestServiceImpl implements RequestService{
             throw new NotFoundException("Запрос " + id + " не найден");
         }
         ItemRequest request = foundRequest.get();
-        System.out.println(itemRepository.findAllByRequestId(request.getId()));
+
         return new ItemRequestServiceDto(
                 request,
                 itemRepository.findAllByRequestId(request.getId())

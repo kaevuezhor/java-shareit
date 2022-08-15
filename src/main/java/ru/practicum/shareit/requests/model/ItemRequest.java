@@ -2,12 +2,10 @@ package ru.practicum.shareit.requests.model;
 
 import lombok.*;
 import org.hibernate.Hibernate;
-import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.model.User;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Objects;
 
 @Getter
@@ -31,6 +29,10 @@ public class ItemRequest {
 
     @Column
     private LocalDateTime created = LocalDateTime.now();
+
+    public ItemRequest(String description) {
+        this.description = description;
+    }
 
     @Override
     public boolean equals(Object o) {
