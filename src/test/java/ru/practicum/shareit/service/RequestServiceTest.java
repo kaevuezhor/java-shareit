@@ -7,7 +7,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.exception.ValidationException;
 import ru.practicum.shareit.item.model.Item;
@@ -44,22 +46,26 @@ public class RequestServiceTest {
 
     private ItemRequest testRequest;
 
+
     private ItemRequest testRequestCreation;
 
     @BeforeEach
     void testSetup() {
         requestService = new RequestServiceImpl(userRepository, requestRepository, itemRepository);
+
         testUser = new User(
                 1L,
                 "name",
                 "e@ma.il"
         );
+
         testRequest = new ItemRequest(
                 1L,
                 "need item",
                 testUser,
                 LocalDateTime.of(2022,1,1, 1,1)
         );
+
         testItem = new Item(
                 1L,
                 "item",
@@ -68,9 +74,11 @@ public class RequestServiceTest {
                 1,
                 testRequest
         );
+
         testRequestCreation = new ItemRequest(
             "need item"
         );
+
         testRequestCreation.setCreated(LocalDateTime.of(2022,1,1, 1,1));
     }
 
@@ -172,7 +180,58 @@ public class RequestServiceTest {
     }
 
     @Test
-    void testFindAll() {
+    void testFindAll() throws ValidationException, NotFoundException {
+        long userId = 1;
+        long wrongUserId = 3;
+        int from = 0;
+        int size = 1;
+        long requestId = 1;
 
+        final ValidationException validationException1 = Assertions.assertThrows(
+                ValidationException.class,
+                () -> requestService.findAll(-1, 5, userId)
+        );
+
+        Assertions.assertEquals("Ошибка в параметрах запроса", validationException1.getMessage());
+
+        final ValidationException validationException2 = Assertions.assertThrows(
+                ValidationException.class,
+                () -> requestService.findAll(1, 0, userId)
+        );
+
+        Assertions.assertEquals("Ошибка в параметрах запроса", validationException2.getMessage());
+
+        PageRequest pageRequest = PageRequest.of(from, size, Sort.by(Sort.Order.desc("created")));
+
+        Mockito
+                .when(userRepository.findById(wrongUserId))
+                .thenReturn(Optional.empty());
+
+        final NotFoundException userNotFoundException = Assertions.assertThrows(
+                NotFoundException.class,
+                () -> requestService.findAll(from, size, wrongUserId)
+        );
+
+        Assertions.assertEquals("Пользователь 3 не найден", userNotFoundException.getMessage());
+
+        Mockito
+                .when(userRepository.findById(userId))
+                .thenReturn(Optional.of(testUser));
+
+        Mockito
+                .when(requestRepository.findAll(pageRequest, userId))
+                .thenReturn(new PageImpl<>(List.of(testRequest)));
+
+        Mockito
+                .when(itemRepository.findAllByRequestId(requestId))
+                .thenReturn(List.of(testItem));
+
+        ItemRequestServiceDto expectedServiceDto = new ItemRequestServiceDto();
+        expectedServiceDto.setItemRequest(testRequest);
+        expectedServiceDto.setItems(List.of(testItem));
+
+        List<ItemRequestServiceDto> foundServiceDtos = requestService.findAll(from, size, userId);
+
+        Assertions.assertEquals(List.of(expectedServiceDto), foundServiceDtos);
     }
 }

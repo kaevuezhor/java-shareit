@@ -33,11 +33,13 @@ public class UserServiceTest {
     @BeforeEach
     void testSetup() {
         userService = new UserServiceImpl(userRepository);
+
         testUser1 = new User(
                 1L,
                 "name",
                 "e@ma.il"
         );
+
         testUser2 = new User(
                 2L,
                 "eman",
