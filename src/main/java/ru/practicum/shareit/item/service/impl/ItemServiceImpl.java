@@ -63,21 +63,21 @@ public class ItemServiceImpl implements ItemService {
     public ItemDtoService getItem(long itemId, long userId) throws NotFoundException {
         Optional<Item> foundItem = itemRepository.findById(itemId);
         if (foundItem.isEmpty()) {
-            throw new NotFoundException("Предмет с id " + itemId + " не найден");
+            throw new NotFoundException("Предмет " + itemId + " не найден");
         }
         List<Booking> itemBookings = bookingRepository.findByItemIdOrderByStart(itemId);
         if (foundItem.get().getOwner() != userId) {
             itemBookings = List.of();
         }
         List<Comment> itemComments = commentRepository.findAllByItemId(itemId);
-        System.out.println(commentRepository.findAll());
+
         return new ItemDtoService(foundItem.get(), itemBookings, itemComments);
     }
 
     @Override
     public Item createItem(ItemDtoCreated item, long userId) throws NotFoundException {
         if (userRepository.findById(userId).isEmpty()) {
-            throw new NotFoundException("Отсутсвует пользователь с id " + userId);
+            throw new NotFoundException("Пользователь " + userId + " не найден");
         }
         ItemRequest linkedRequest;
         if (item.getRequestId() == null) {
@@ -85,25 +85,22 @@ public class ItemServiceImpl implements ItemService {
         } else {
             linkedRequest = requestRepository.getReferenceById(item.getRequestId());
         }
-        Item creatingItem = new Item();
-        creatingItem.setName(item.getName());
-        creatingItem.setDescription(item.getDescription());
-        creatingItem.setAvailable(item.getAvailable());
-        creatingItem.setOwner(userId);
-        creatingItem.setRequest(linkedRequest);
-        return itemRepository.save(creatingItem);
+        return itemRepository.save(new Item(
+                null,
+                item.getName(),
+                item.getDescription(),
+                item.getAvailable(),
+                userId,
+                linkedRequest
+        ));
     }
 
     @Override
     public Item updateItem(long itemId, Item item, long userId) throws NotFoundException, AccessException {
         if (userRepository.findById(userId).isEmpty()) {
-            throw new NotFoundException("Отсутсвует пользователь с id " + userId);
+            throw new NotFoundException("Пользователь " + userId + " не найден");
         }
-        if (isNotOwner(itemId, userId)) {
-            throw new AccessException(
-                    String.format("Пользователь %s не является владельцем предмета %s", userId, itemId)
-            );
-        }
+        checkAccess(itemId, userId);
         return patchItem(item, itemRepository.getReferenceById(itemId));
     }
 
@@ -112,11 +109,7 @@ public class ItemServiceImpl implements ItemService {
         if (userRepository.findById(userId).isEmpty()) {
             throw new NotFoundException("Отсутсвует пользователь с id " + userId);
         }
-        if (isNotOwner(itemId, userId)) {
-            throw new AccessException(
-                    String.format("Пользователь %s не является владельцем предмета %s", userId, itemId)
-            );
-        }
+        checkAccess(itemId, userId);
         itemRepository.deleteById(itemId);
     }
 
@@ -124,11 +117,11 @@ public class ItemServiceImpl implements ItemService {
     public Comment postComment(long userId, long itemId, Comment comment) throws NotFoundException, NotBookedException {
         Optional<User> foundUser = userRepository.findById(userId);
         if (foundUser.isEmpty()) {
-            throw new NotFoundException("Отсутсвует пользователь с id " + userId);
+            throw new NotFoundException("Пользователь " + userId + " не найден");
         }
         Optional<Item> foundItem = itemRepository.findById(itemId);
         if (foundItem.isEmpty()) {
-            throw new NotFoundException("Предмет с id " + itemId + " не найден");
+            throw new NotFoundException("Предмет " + itemId + " не найден");
         }
         if (!isUserBookedItem(userId, itemId)) {
             throw new NotBookedException("Пользователь " + userId + " не брал в аренду предмет " + itemId);
@@ -138,9 +131,16 @@ public class ItemServiceImpl implements ItemService {
         return commentRepository.save(comment);
     }
 
-
-    private boolean isNotOwner(long itemId, long userId) {
-        return itemRepository.getReferenceById(itemId).getOwner() != userId;
+    private void checkAccess(long itemId, long userId) throws NotFoundException, AccessException {
+        Optional<Item> foundItem = itemRepository.findById(itemId);
+        if (foundItem.isEmpty()) {
+            throw new NotFoundException("Предмет " + itemId + " не найден");
+        }
+        if (foundItem.get().getOwner() != userId) {
+            throw new AccessException(
+                    String.format("Пользователь %s не является владельцем предмета %s", userId, itemId)
+            );
+        }
     }
 
     private Item patchItem(Item patch, Item item) {

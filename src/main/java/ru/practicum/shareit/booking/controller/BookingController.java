@@ -14,9 +14,6 @@ import ru.practicum.shareit.exception.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * // TODO .
- */
 @Slf4j
 @RestController
 @RequestMapping(path = "/bookings")

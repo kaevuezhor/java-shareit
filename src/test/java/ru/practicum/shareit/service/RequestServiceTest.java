@@ -71,7 +71,7 @@ public class RequestServiceTest {
                 "item",
                 "desc",
                 true,
-                1,
+                1L,
                 testRequest
         );
 

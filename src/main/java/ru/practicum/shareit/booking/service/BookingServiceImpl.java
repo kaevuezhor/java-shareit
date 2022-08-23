@@ -35,11 +35,11 @@ public class BookingServiceImpl implements BookingService {
     public Booking createBooking(BookingDtoCreate bookingDto, long userId) throws NotFoundException, ValidationException, UnavailableException, AccessException {
         Optional<User> booker = userRepository.findById(userId);
         if (booker.isEmpty()) {
-            throw new NotFoundException("Пользователь id " + userId + " не найден");
+            throw new NotFoundException("Пользователь " + userId + " не найден");
         }
         Optional<Item> item = itemRepository.findById(bookingDto.getItemId());
         if (item.isEmpty()) {
-            throw new NotFoundException("Предмет id " + bookingDto.getItemId() + " не найден");
+            throw new NotFoundException("Предмет " + bookingDto.getItemId() + " не найден");
         }
         if (item.get().getOwner() == userId) {
             throw new AccessException("Вы не можете забронировать свой предмет");
@@ -70,11 +70,11 @@ public class BookingServiceImpl implements BookingService {
     public Booking approveBooking(long bookingId, boolean approved, long userId) throws NotFoundException, NotOwnerException, AlreadyApprovedException {
         Optional<Booking> booking = bookingRepository.findById(bookingId);
         if (booking.isEmpty()) {
-            throw new NotFoundException("Запроса на бронирование id " + bookingId + " не найден");
+            throw new NotFoundException("Запрос на бронирование " + bookingId + " не найден");
         }
         if (booking.get().getItem().getOwner() != userId) {
             throw new NotOwnerException(
-                    "Пользователь id " + userId + " не является владельцем предмета " + booking.get().getItem()
+                    "Пользователь " + userId + " не является владельцем предмета " + booking.get().getItem().getId()
             );
         }
         if (booking.get().getStatus().equals(APPROVED)) {
@@ -85,19 +85,19 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public Booking findBooking(long bookingId, long userId) throws Throwable {
-        Optional<User> owner = userRepository.findById(userId);
-        if (owner.isEmpty()) {
-            throw new NotFoundException("Пользователь id " + userId + " не найден");
+        Optional<User> user = userRepository.findById(userId);
+        if (user.isEmpty()) {
+            throw new NotFoundException("Пользователь " + userId + " не найден");
         }
         Optional<Booking> booking = bookingRepository.findById(bookingId);
-        return booking.orElseThrow((Supplier<Throwable>) () -> new NotFoundException("Запроса на бронирование id " + bookingId + " не найден"));
+        return booking.orElseThrow((Supplier<Throwable>) () -> new NotFoundException("Запрос на бронирование " + bookingId + " не найден"));
     }
 
     @Override
     public List<Booking> findUserBookingsByState(long userId, BookingState state, int from, int size) throws NotFoundException, ValidationException {
         Optional<User> user = userRepository.findById(userId);
         if (user.isEmpty()) {
-            throw new NotFoundException("Пользователь id " + userId + " не найден");
+            throw new NotFoundException("Пользователь " + userId + " не найден");
         }
         PageRequest pageRequest = PageRequest.of(from, size, Sort.by(Sort.Order.desc("start")));
         switch (state) {
@@ -121,7 +121,7 @@ public class BookingServiceImpl implements BookingService {
     public List<Booking> findOwnerBookingsByState(long userId, BookingState state, int from, int size) throws NotFoundException, ValidationException {
         Optional<User> owner = userRepository.findById(userId);
         if (owner.isEmpty()) {
-            throw new NotFoundException("Пользователь id " + userId + " не найден");
+            throw new NotFoundException("Пользователь " + userId + " не найден");
         }
         PageRequest pageRequest = PageRequest.of(from, size, Sort.by(Sort.Order.desc("start")));
         switch (state) {
