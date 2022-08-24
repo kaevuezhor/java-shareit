@@ -95,7 +95,7 @@ class ShareItTests {
 				secondItem
 		);
 
-		List<ItemDtoService> allUserItems = itemService.getAllUserItems(requestHeaderUserId, 0 , 2);
+		List<ItemDtoService> allUserItems = itemService.getAllUserItems(requestHeaderUserId, 0, 2);
 
 		Assertions.assertEquals(2, allUserItems.size());
 
