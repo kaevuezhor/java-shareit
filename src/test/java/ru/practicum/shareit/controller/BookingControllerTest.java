@@ -20,9 +20,11 @@ import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.dto.UserDtoShort;
 import ru.practicum.shareit.user.model.User;
 
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -90,11 +92,12 @@ public class BookingControllerTest {
         when(bookingService.createBooking(requestBody,testUser2.getId())).thenReturn(testBookingWaiting);
         when(bookingMapper.toBookingDto(testBookingWaiting)).thenReturn(expectedDto);
 
-        mockMvc.perform(post("/booking")
-                .content(mapper.writeValueAsString(requestBody))
-                .header("X-Sharer-User-Id", testUser2.getId())
-                .accept(MediaType.APPLICATION_JSON)
-                .contentType(MediaType.APPLICATION_JSON))
+        mockMvc.perform(post("/bookings")
+                        .content(mapper.writeValueAsString(requestBody))
+                        .header("X-Sharer-User-Id", testUser2.getId())
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(expectedDto.getId()))
                 .andExpect(jsonPath("$.start").value(expectedDto.getStart()))
@@ -118,9 +121,10 @@ public class BookingControllerTest {
         when(bookingMapper.toBookingDto(testBookingApproved))
                 .thenReturn(expectedDto);
 
-        mockMvc.perform(post("/booking/{id}", testBookingWaiting.getId())
-                        .param("available", String.valueOf(true))
+        mockMvc.perform(patch("/bookings/{id}", testBookingWaiting.getId())
+                        .param("approved", String.valueOf(true))
                         .header("X-Sharer-User-Id", testUser1.getId())
+                        .characterEncoding(StandardCharsets.UTF_8)
                         .accept(MediaType.APPLICATION_JSON)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
