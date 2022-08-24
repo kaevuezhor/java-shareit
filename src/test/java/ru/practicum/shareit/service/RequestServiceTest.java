@@ -18,7 +18,7 @@ import ru.practicum.shareit.requests.dto.ItemRequestServiceDto;
 import ru.practicum.shareit.requests.model.ItemRequest;
 import ru.practicum.shareit.requests.repository.ItemRequestRepository;
 import ru.practicum.shareit.requests.service.RequestService;
-import ru.practicum.shareit.requests.service.RequestServiceImpl;
+import ru.practicum.shareit.requests.service.impl.RequestServiceImpl;
 import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.repository.UserRepository;
 
@@ -128,7 +128,7 @@ public class RequestServiceTest {
     void testFindById() throws Throwable {
         long userId = 1L;
         long requestId = 1L;
-        long wrongUserId= 3L;
+        long wrongUserId = 3L;
         long wrongRequestId = 3L;
 
         Mockito

@@ -1,34 +1,25 @@
 package ru.practicum.shareit;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.Rollback;
-import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.booking.dto.BookingDtoCreate;
 import ru.practicum.shareit.booking.model.Booking;
-import ru.practicum.shareit.booking.model.BookingState;
 import ru.practicum.shareit.booking.service.BookingService;
 import ru.practicum.shareit.exception.*;
-import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.dto.ItemDtoCreated;
 import ru.practicum.shareit.item.dto.ItemDtoService;
-import ru.practicum.shareit.item.model.Comment;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.service.ItemService;
-import ru.practicum.shareit.item.service.impl.ItemServiceImpl;
-import ru.practicum.shareit.service.BookingServiceTest;
 import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.service.UserService;
 
 import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -130,7 +121,7 @@ class ShareItTests {
 
 		Booking approvedBooking = bookingService.approveBooking(1, true, 1);
 
-		allUserItems = itemService.getAllUserItems(requestHeaderUserId,0,1);
+		allUserItems = itemService.getAllUserItems(requestHeaderUserId, 0, 1);
 
 		Assertions.assertEquals(List.of(new ItemDtoService(firstItem, List.of(approvedBooking), List.of())), allUserItems);
 	}
