@@ -11,6 +11,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.user.controller.UserController;
+import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.mapper.UserMapper;
 import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.service.UserService;
@@ -21,8 +22,7 @@ import java.util.List;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(controllers = UserController.class)
 @AutoConfigureMockMvc
@@ -41,10 +41,18 @@ public class UserControllerTest {
 
     private User testUser = new User(1L, "name", "e@m.l");
 
+    private UserDto testUserDto = new UserDto(
+            testUser.getId(),
+            testUser.getName(),
+            testUser.getEmail()
+    );
+
     @Test
     void testCreateUser() throws Exception {
         when(userService.createUser(any(User.class)))
                 .thenReturn(testUser);
+        when(userMapper.toUserDto(testUser))
+                .thenReturn(testUserDto);
 
         mockMvc.perform(post("/users")
                         .content(mapper.writeValueAsString(new User(
@@ -52,6 +60,8 @@ public class UserControllerTest {
                                 "name",
                                 "e@m.l"
                         )))
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .accept(MediaType.APPLICATION_JSON)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").isNumber())
@@ -63,9 +73,13 @@ public class UserControllerTest {
     void testGetUser() throws Exception {
         when(userService.getUser(any(Long.class)))
                 .thenReturn(testUser);
+        when(userMapper.toUserDto(testUser))
+                .thenReturn(testUserDto);
 
         mockMvc.perform(get("/users/{id}", testUser.getId())
-                .contentType(MediaType.APPLICATION_JSON))
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").isNumber())
                 .andExpect(jsonPath("$.name").value(testUser.getName()))
@@ -76,13 +90,15 @@ public class UserControllerTest {
     void testGetAllUsers() throws Exception {
         when(userService.getAllUsers())
                 .thenReturn(List.of(testUser));
+        when(userMapper.toUserDto(testUser))
+                .thenReturn(testUserDto);
 
         mockMvc.perform(get("/users")
-                .characterEncoding(StandardCharsets.UTF_8)
-                .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.APPLICATION_JSON))
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(MockMvcResultMatchers.content().json(mapper.writeValueAsString(List.of(testUser))));
+                .andExpect(content().json(mapper.writeValueAsString(List.of(testUser))));
     }
 
     @Test
@@ -90,17 +106,26 @@ public class UserControllerTest {
         User patch = new User(null, "amen", null);
         User expectedUser = testUser;
         expectedUser.setName(patch.getName());
+        UserDto expectedUserDto = new UserDto(
+                expectedUser.getId(),
+                expectedUser.getName(),
+                expectedUser.getEmail()
+        );
 
         when(userService.updateUser(testUser.getId(), patch))
                 .thenReturn(expectedUser);
+        when(userMapper.toUserDto(expectedUser))
+                .thenReturn(expectedUserDto);
 
         mockMvc.perform(patch("/users/{id}", testUser.getId())
                         .content(mapper.writeValueAsString(patch))
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .accept(MediaType.APPLICATION_JSON)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(expectedUser.getId()))
-                .andExpect(jsonPath("$.name").value(expectedUser.getName()))
-                .andExpect(jsonPath("$.email").value(expectedUser.getEmail()));
+                .andExpect(jsonPath("$.id").value(expectedUserDto.getId()))
+                .andExpect(jsonPath("$.name").value(expectedUserDto.getName()))
+                .andExpect(jsonPath("$.email").value(expectedUserDto.getEmail()));
     }
 
     @Test

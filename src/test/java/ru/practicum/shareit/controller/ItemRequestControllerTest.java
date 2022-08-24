@@ -53,7 +53,7 @@ public class ItemRequestControllerTest {
                 1L,
                 "need item",
                 testUser2,
-                LocalDateTime.of(2022,1,1,1,1,0)
+                LocalDateTime.of(2022,1,1,1,1,1)
             );
 
     @Test
@@ -74,8 +74,11 @@ public class ItemRequestControllerTest {
                 .thenReturn(expectedDto);
 
         mockMvc.perform(post("/requests")
-                .header("X-Sharer-User-Id", testUser2.getId())
-                .content(mapper.writeValueAsString(requestBody)))
+                        .header("X-Sharer-User-Id", testUser2.getId())
+                        .content(mapper.writeValueAsString(requestBody))
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(expectedDto.getId()))
                 .andExpect(jsonPath("$.description").value(expectedDto.getDescription()))

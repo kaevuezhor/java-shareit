@@ -42,7 +42,7 @@ public class ItemController {
     public List<ItemDtoUserView> getAllItems(
             @RequestParam(required = false, defaultValue = "0") int from,
             @RequestParam(required = false, defaultValue = "10") int size,
-            @RequestHeader ("X-Sharer-User-Id") int userId
+            @RequestHeader ("X-Sharer-User-Id") long userId
     ) {
         log.info("Запрошены все предметы пользователя {}", userId);
         List<ItemDtoService> foundItems = itemService.getAllUserItems(userId, from, size);
@@ -54,7 +54,7 @@ public class ItemController {
     @GetMapping("/{itemId}")
     public ItemDtoUserView getItem(
             @PathVariable int itemId,
-            @RequestHeader ("X-Sharer-User-Id") int userId
+            @RequestHeader ("X-Sharer-User-Id") long userId
     ) throws NotFoundException {
         log.info("Запрошен предмет id {}", itemId);
         ItemDtoService foundItem = itemService.getItem(itemId, userId);
@@ -63,7 +63,7 @@ public class ItemController {
 
     @PostMapping
     public ItemDto createItem(@RequestBody ItemDtoCreated item,
-                              @RequestHeader ("X-Sharer-User-Id") int userId
+                              @RequestHeader ("X-Sharer-User-Id") long userId
     ) throws ValidationException, NotFoundException {
         if (isNotValidated(item)) {
             throw new ValidationException("Ошибка валидации");
@@ -73,9 +73,9 @@ public class ItemController {
     }
 
     @PatchMapping("/{itemId}")
-    public ItemDto updateItem(@PathVariable int itemId,
+    public ItemDto updateItem(@PathVariable long itemId,
                               @RequestBody Item item,
-                              @RequestHeader ("X-Sharer-User-Id") int userId
+                              @RequestHeader ("X-Sharer-User-Id") long userId
     ) throws NotFoundException, AccessException {
         log.info("Обновлен предмет {} пользователем {},\n"
         + "Обновлено: {}", itemId, userId, item);
@@ -83,8 +83,8 @@ public class ItemController {
     }
 
     @DeleteMapping("/{itemId}")
-    public void deleteItem(@PathVariable int itemId,
-                           @RequestHeader ("X-Sharer-User-Id") int userId
+    public void deleteItem(@PathVariable long itemId,
+                           @RequestHeader ("X-Sharer-User-Id") long userId
     ) throws AccessException, NotFoundException {
         log.info("Удален предмет {} пользователем {}", itemId, userId);
         itemService.deleteItem(itemId, userId);

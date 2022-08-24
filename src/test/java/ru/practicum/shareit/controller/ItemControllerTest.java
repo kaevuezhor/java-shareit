@@ -19,6 +19,7 @@ import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.service.ItemService;
 import ru.practicum.shareit.user.model.User;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import static org.mockito.Mockito.when;
@@ -45,23 +46,21 @@ public class ItemControllerTest {
 
     private Item testItem = new Item(1L, "item", "desc", true, 1L, null);
 
-    ItemDto expectedItemDto = new ItemDto(testItem.getId(), testItem.getName(), testItem.getDescription(), testItem.getAvailable(), null);
-
-    long headerItemId = 1L;
-    long headerUserId = 1L;
+    private ItemDto expectedItemDto = new ItemDto(testItem.getId(), testItem.getName(), testItem.getDescription(), testItem.getAvailable(), null);
 
     @Test
     void testCreateItem() throws Exception {
         ItemDtoCreated requestBody = new ItemDtoCreated("item", "desc", true, null);
 
-        when(itemService.createItem(requestBody, headerUserId))
+        when(itemService.createItem(requestBody, testUser.getId()))
                 .thenReturn(testItem);
         when(itemMapper.toItemDto(testItem))
                 .thenReturn(expectedItemDto);
 
         mockMvc.perform(post("/items")
+                        .header("X-Sharer-User-Id", testUser.getId())
                         .content(mapper.writeValueAsString(requestBody))
-                        .header("X-Sharer-User-Id", headerUserId)
+                        .characterEncoding(StandardCharsets.UTF_8)
                         .accept(MediaType.APPLICATION_JSON)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -85,13 +84,14 @@ public class ItemControllerTest {
                 List.of()
         );
 
-        when(itemService.getItem(headerItemId, headerUserId))
+        when(itemService.getItem(testUser.getId(), testUser.getId()))
                 .thenReturn(itemDtoService);
         when(itemMapper.toItemDtoUserView(itemDtoService))
                 .thenReturn(itemDtoUserView);
 
         mockMvc.perform(get("/items/{id}", testItem.getId())
-                        .header("X-Sharer-User-Id", headerUserId)
+                        .header("X-Sharer-User-Id", testUser.getId())
+                        .characterEncoding(StandardCharsets.UTF_8)
                         .accept(MediaType.APPLICATION_JSON)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -113,12 +113,13 @@ public class ItemControllerTest {
         when(itemMapper.toItemDto(testItem))
                 .thenReturn(expectedItemDto);
 
-        mockMvc.perform(get("/items")
+        mockMvc.perform(get("/items/search")
                         .param("text", searchText)
+                        .characterEncoding(StandardCharsets.UTF_8)
                         .accept(MediaType.APPLICATION_JSON)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(content().json(mapper.writeValueAsString(List.of(testItem))));
+                .andExpect(content().json(mapper.writeValueAsString(List.of(expectedItemDto))));
     }
 
     @Test
@@ -134,11 +135,12 @@ public class ItemControllerTest {
                 List.of()
         );
 
-        when(itemService.getAllUserItems(headerUserId, 0, 10)).thenReturn(List.of(itemDtoService));
+        when(itemService.getAllUserItems(testUser.getId(), 0, 10)).thenReturn(List.of(itemDtoService));
         when(itemMapper.toItemDtoUserView(itemDtoService)).thenReturn(itemDtoUserView);
 
         mockMvc.perform(get("/items")
-                        .header("X-Sharer-User-Id", headerUserId)
+                        .header("X-Sharer-User-Id", testUser.getId())
+                        .characterEncoding(StandardCharsets.UTF_8)
                         .accept(MediaType.APPLICATION_JSON)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -153,29 +155,40 @@ public class ItemControllerTest {
 
         when(itemService.updateItem(testItem.getId(), patch, testUser.getId()))
                 .thenReturn(updatedItem);
+        when(itemMapper.toItemDto(updatedItem)).thenReturn(new ItemDto(
+           updatedItem.getId(),
+                updatedItem.getName(),
+                updatedItem.getDescription(),
+                updatedItem.getAvailable(),
+                null
+        ));
 
         mockMvc.perform(patch("/items/{id}", testItem.getId())
-                        .header("X-Sharer-User-Id", headerUserId)
+                        .header("X-Sharer-User-Id", testUser.getId())
                         .content(mapper.writeValueAsString(patch))
+                        .characterEncoding(StandardCharsets.UTF_8)
                         .accept(MediaType.APPLICATION_JSON)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(updatedItem.getId()))
+                .andExpect(jsonPath("$.id").value(expectedItemDto.getId()))
                 .andExpect(jsonPath("$.name").value(updatedItem.getName()))
-                .andExpect(jsonPath("$.description").value(updatedItem.getDescription()))
-                .andExpect(jsonPath("$.available").value(updatedItem.getAvailable()))
+                .andExpect(jsonPath("$.description").value(expectedItemDto.getDescription()))
+                .andExpect(jsonPath("$.available").value(expectedItemDto.getAvailable()))
                 .andExpect(jsonPath("$.requestId").isEmpty());
     }
 
     @Test
     void testDeleteItem() throws Exception {
         mockMvc.perform(delete("/items/{id}", testItem.getId())
-                        .header("X-Sharer-User-Id", headerUserId))
+                        .header("X-Sharer-User-Id", testUser.getId())
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
         when(itemService.getItem(testItem.getId(), testUser.getId()))
                 .thenThrow(new NotFoundException("Предмет 1 не найден"));
         mockMvc.perform(get("/items/{id}", testUser.getId())
-                        .header("X-Sharer-User-Id", headerUserId)
+                        .header("X-Sharer-User-Id", testUser.getId())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());
     }
