@@ -18,7 +18,7 @@ import ru.practicum.shareit.user.service.UserService;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -111,9 +111,9 @@ public class UserControllerTest {
                 expectedUser.getEmail()
         );
 
-        when(userService.updateUser(testUser.getId(), patch))
+        when(userService.updateUser(anyLong(), any(User.class)))
                 .thenReturn(expectedUser);
-        when(userMapper.toUserDto(expectedUser))
+        when(userMapper.toUserDto(any(User.class)))
                 .thenReturn(expectedUserDto);
 
         mockMvc.perform(patch("/users/{id}", testUser.getId())

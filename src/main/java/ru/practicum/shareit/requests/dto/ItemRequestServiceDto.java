@@ -6,11 +6,9 @@ import ru.practicum.shareit.requests.model.ItemRequest;
 
 import java.util.List;
 
+@Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Setter
-@Getter
-@EqualsAndHashCode
 public class ItemRequestServiceDto {
     private ItemRequest itemRequest;
     private List<Item> items;

@@ -22,6 +22,8 @@ import ru.practicum.shareit.user.model.User;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -52,9 +54,9 @@ public class ItemControllerTest {
     void testCreateItem() throws Exception {
         ItemDtoCreated requestBody = new ItemDtoCreated("item", "desc", true, null);
 
-        when(itemService.createItem(requestBody, testUser.getId()))
+        when(itemService.createItem(any(ItemDtoCreated.class), anyLong()))
                 .thenReturn(testItem);
-        when(itemMapper.toItemDto(testItem))
+        when(itemMapper.toItemDto(any(Item.class)))
                 .thenReturn(expectedItemDto);
 
         mockMvc.perform(post("/items")

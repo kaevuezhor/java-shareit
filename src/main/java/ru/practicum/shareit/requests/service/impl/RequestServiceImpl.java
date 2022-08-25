@@ -60,7 +60,8 @@ public class RequestServiceImpl implements RequestService {
         if (user.isEmpty()) {
             throw new NotFoundException("Пользователь " + userId + " не найден");
         }
-        return requestRepository.findAll(PageRequest.of(from, size, Sort.by(Sort.Order.desc("created"))), userId)
+        //return requestRepository.findAll(PageRequest.of(from, size, Sort.by(Sort.Order.desc("created"))), userId)
+        return requestRepository.findAllByRequesterIdNot(userId, PageRequest.of(from, size, Sort.by(Sort.Order.desc("created"))))
                 .stream()
                 .map(r -> new ItemRequestServiceDto(r, itemRepository.findAllByRequestId(r.getId())))
                 .collect(Collectors.toList());

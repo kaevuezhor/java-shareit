@@ -12,8 +12,12 @@ public interface ItemRequestRepository extends JpaRepository<ItemRequest, Long> 
 
     List<ItemRequest> findAllByRequesterId(long requesterId);
 
+    /*
     @Query("select r from ItemRequest r " +
             "where r.requester.id <> :userId")
     Page<ItemRequest> findAll(Pageable pageable, long userId);
 
+     */
+
+    Page<ItemRequest> findAllByRequesterIdNot(long userId, Pageable pageable);
 }

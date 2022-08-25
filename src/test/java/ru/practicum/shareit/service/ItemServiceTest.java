@@ -285,7 +285,8 @@ public class ItemServiceTest {
 
         Mockito
                 .when(bookingRepository
-                        .findUserPast(eq(userId), any(LocalDateTime.class)))
+                        //.findUserPast(eq(userId), any(LocalDateTime.class)))
+                        .findAllByBookerIdAndEndBefore(eq(userId), any(LocalDateTime.class)))
                 .thenReturn(List.of(new Booking(
                         1L,
                         LocalDateTime.of(2022,1,1,1,1),

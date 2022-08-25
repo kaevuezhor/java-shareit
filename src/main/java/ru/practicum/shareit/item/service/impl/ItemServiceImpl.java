@@ -42,7 +42,7 @@ public class ItemServiceImpl implements ItemService {
     @Override
     public List<Item> searchItems(String text, int from, int size) {
         if (text.isBlank()) {
-            return List.of();
+            return Collections.emptyList();
         }
         return itemRepository.search(text, PageRequest.of(from, size, Sort.by(Sort.Order.asc("id"))));
     }
@@ -161,11 +161,13 @@ public class ItemServiceImpl implements ItemService {
 
     private boolean isUserBookedItem(long userId, long itemId) {
         boolean isPastBooking = bookingRepository
-                .findUserPast(userId, LocalDateTime.now())
+                //.findUserPast(userId, LocalDateTime.now())
+                .findAllByBookerIdAndEndBefore(userId, LocalDateTime.now())
                 .stream()
                 .anyMatch(booking -> booking.getItem().getId() == itemId);
         boolean isCurrentBooking = bookingRepository
-                .findUserCurrent(userId, LocalDateTime.now())
+                //.findUserCurrent(userId, LocalDateTime.now())
+                .findAllByBookerIdCurrent(userId, LocalDateTime.now())
                 .stream()
                 .anyMatch(booking -> booking.getItem().getId() == itemId);
         return isPastBooking || isCurrentBooking;

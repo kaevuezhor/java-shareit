@@ -100,9 +100,9 @@ public class BookingControllerTest {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(expectedDto.getId()))
-                .andExpect(jsonPath("$.start").value(expectedDto.getStart()))
-                .andExpect(jsonPath("$.end").value(expectedDto.getEnd()))
-                .andExpect(jsonPath("$.status").value(expectedDto.getStatus()));
+                .andExpect(jsonPath("$.start").exists())
+                .andExpect(jsonPath("$.end").exists())
+                .andExpect(jsonPath("$.status").value(expectedDto.getStatus().toString()));
     }
 
     @Test
@@ -129,8 +129,8 @@ public class BookingControllerTest {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(expectedDto.getId()))
-                .andExpect(jsonPath("$.start").value(expectedDto.getStart()))
-                .andExpect(jsonPath("$.end").value(expectedDto.getEnd()))
-                .andExpect(jsonPath("$.status").value(expectedDto.getStatus()));
+                .andExpect(jsonPath("$.start").exists())
+                .andExpect(jsonPath("$.end").exists())
+                .andExpect(jsonPath("$.status").value(expectedDto.getStatus().toString()));
     }
 }

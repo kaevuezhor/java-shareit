@@ -21,6 +21,8 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -68,9 +70,9 @@ public class ItemRequestControllerTest {
                 List.of()
         );
 
-        when(requestService.createRequest(requestBody, testUser2.getId()))
+        when(requestService.createRequest(any(ItemRequest.class), anyLong()))
                 .thenReturn(testRequest);
-        when(itemRequestMapper.toItemRequestDto(new ItemRequestServiceDto(testRequest, List.of())))
+        when(itemRequestMapper.toItemRequestDto(any(ItemRequestServiceDto.class)))
                 .thenReturn(expectedDto);
 
         mockMvc.perform(post("/requests")
@@ -82,16 +84,16 @@ public class ItemRequestControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(expectedDto.getId()))
                 .andExpect(jsonPath("$.description").value(expectedDto.getDescription()))
-                .andExpect(jsonPath("$.created").value(expectedDto.getCreated()));
+                .andExpect(jsonPath("$.created").value(expectedDto.getCreated().toString()));
     }
 
     @Test
     void testFindAllByRequester() throws Exception {
         ItemRequestServiceDto requestDto = new ItemRequestServiceDto(testRequest, List.of());
 
-        when(requestService.findAllByRequester(testUser2.getId()))
+        when(requestService.findAllByRequester(anyLong()))
                 .thenReturn(List.of(requestDto));
-        when(itemRequestMapper.toItemRequestDto(requestDto))
+        when(itemRequestMapper.toItemRequestDto(any(ItemRequestServiceDto.class)))
                 .thenReturn(new ItemRequestDto(
                         testRequest.getId(),
                         testRequest.getDescription(),
@@ -145,6 +147,6 @@ public class ItemRequestControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(expectedDto.getId()))
                 .andExpect(jsonPath("$.description").value(expectedDto.getDescription()))
-                .andExpect(jsonPath("$.created").value(expectedDto.getCreated()));
+                .andExpect(jsonPath("$.created").exists());
     }
 }

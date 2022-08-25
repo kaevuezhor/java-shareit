@@ -102,16 +102,21 @@ public class BookingServiceImpl implements BookingService {
         PageRequest pageRequest = PageRequest.of(from, size, Sort.by(Sort.Order.desc("start")));
         switch (state) {
             case CURRENT:
-                return bookingRepository.findUserCurrent(userId, LocalDateTime.now(), pageRequest);
+                //return bookingRepository.findUserCurrent(userId, LocalDateTime.now(), pageRequest);
+                return bookingRepository.findAllByBookerIdCurrent(userId, LocalDateTime.now(), pageRequest);
             case PAST:
-                return bookingRepository.findUserPast(userId, LocalDateTime.now(), pageRequest);
+                //return bookingRepository.findUserPast(userId, LocalDateTime.now(), pageRequest);
+                return bookingRepository.findAllByBookerIdAndEndBefore(userId, LocalDateTime.now(), pageRequest);
             case FUTURE:
-                return bookingRepository.findUserFuture(userId, LocalDateTime.now(), pageRequest);
+                //return bookingRepository.findUserFuture(userId, LocalDateTime.now(), pageRequest);
+                return bookingRepository.findAllByBookerIdAndStartAfter(userId, LocalDateTime.now(), pageRequest);
             case WAITING:
             case REJECTED:
-                return bookingRepository.findUserByStatus(userId, BookingStatus.valueOf(String.valueOf(state)), pageRequest);
+                //return bookingRepository.findUserByStatus(userId, BookingStatus.valueOf(String.valueOf(state)), pageRequest);
+                return bookingRepository.findAllByBookerIdAndStatus(userId, BookingStatus.valueOf(String.valueOf(state)), pageRequest);
             case ALL:
-                return bookingRepository.findByUserId(userId, pageRequest);
+                //return bookingRepository.findByUserId(userId, pageRequest);
+                return bookingRepository.findAllByBookerId(userId, pageRequest);
             default:
                 throw new ValidationException("Ошибка в статусе");
         }
@@ -126,16 +131,21 @@ public class BookingServiceImpl implements BookingService {
         PageRequest pageRequest = PageRequest.of(from, size, Sort.by(Sort.Order.desc("start")));
         switch (state) {
             case CURRENT:
-                return bookingRepository.findCurrentByOwner(userId, LocalDateTime.now(), pageRequest);
+                //return bookingRepository.findCurrentByOwner(userId, LocalDateTime.now(), pageRequest);
+                return bookingRepository.findAllCurrentByItemOwner(userId, LocalDateTime.now(), pageRequest);
             case PAST:
-                return bookingRepository.findPastByOwner(userId, LocalDateTime.now(), pageRequest);
+                //return bookingRepository.findPastByOwner(userId, LocalDateTime.now(), pageRequest);
+                return bookingRepository.findAllByItemOwnerAndEndBefore(userId, LocalDateTime.now(), pageRequest);
             case FUTURE:
-                return bookingRepository.findFutureByOwner(userId, LocalDateTime.now(), pageRequest);
+                //return bookingRepository.findFutureByOwner(userId, LocalDateTime.now(), pageRequest);
+                return bookingRepository.findAllByItemOwnerAndStartAfter(userId, LocalDateTime.now(), pageRequest);
             case WAITING:
             case REJECTED:
-                return bookingRepository.findByOwnerAndStatus(userId, BookingStatus.valueOf(String.valueOf(state)), pageRequest);
+                //return bookingRepository.findByOwnerAndStatus(userId, BookingStatus.valueOf(String.valueOf(state)), pageRequest);
+                return bookingRepository.findAllByItemOwnerAndStatus(userId, BookingStatus.valueOf(String.valueOf(state)), pageRequest);
             case ALL:
-                return bookingRepository.findByOwner(userId, pageRequest);
+                //return bookingRepository.findByOwner(userId, pageRequest);
+                return bookingRepository.findAllByItemOwner(userId, pageRequest);
             default:
                 throw new ValidationException("Ошибка в статусе");
         }

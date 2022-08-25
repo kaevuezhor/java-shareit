@@ -219,7 +219,8 @@ public class RequestServiceTest {
                 .thenReturn(Optional.of(testUser));
 
         Mockito
-                .when(requestRepository.findAll(pageRequest, userId))
+                //.when(requestRepository.findAll(pageRequest, userId))
+                .when(requestRepository.findAllByRequesterIdNot(userId, pageRequest))
                 .thenReturn(new PageImpl<>(List.of(testRequest)));
 
         Mockito

@@ -341,27 +341,33 @@ public class BookingServiceTest {
 
         bookingService.findUserBookingsByState(userId, BookingState.CURRENT, from, size);
         Mockito.verify(bookingRepository, Mockito.atLeastOnce())
-                .findUserCurrent(eq(userId), any(LocalDateTime.class), any(PageRequest.class));
+                //.findUserCurrent(eq(userId), any(LocalDateTime.class), any(PageRequest.class));
+                .findAllByBookerIdCurrent(eq(userId), any(LocalDateTime.class), any(PageRequest.class));
 
         bookingService.findUserBookingsByState(userId, BookingState.PAST, from, size);
         Mockito.verify(bookingRepository, Mockito.atLeastOnce())
-                .findUserPast(eq(userId), any(LocalDateTime.class), any(PageRequest.class));
+                //.findUserPast(eq(userId), any(LocalDateTime.class), any(PageRequest.class));
+                .findAllByBookerIdAndEndBefore(eq(userId), any(LocalDateTime.class), any(PageRequest.class));
 
         bookingService.findUserBookingsByState(userId, BookingState.FUTURE, from, size);
         Mockito.verify(bookingRepository, Mockito.atLeastOnce())
-                .findUserFuture(eq(userId), any(LocalDateTime.class), any(PageRequest.class));
+                //.findUserFuture(eq(userId), any(LocalDateTime.class), any(PageRequest.class));
+                .findAllByBookerIdAndStartAfter(eq(userId), any(LocalDateTime.class), any(PageRequest.class));
 
         bookingService.findUserBookingsByState(userId, BookingState.WAITING, from, size);
         Mockito.verify(bookingRepository, Mockito.atLeastOnce())
-                .findUserByStatus(eq(userId), any(BookingStatus.class), any(PageRequest.class));
+                //.findUserByStatus(eq(userId), any(BookingStatus.class), any(PageRequest.class));
+                .findAllByBookerIdAndStatus(eq(userId), any(BookingStatus.class), any(PageRequest.class));
 
         bookingService.findUserBookingsByState(userId, BookingState.REJECTED, from, size);
         Mockito.verify(bookingRepository, Mockito.atLeastOnce())
-                .findUserByStatus(eq(userId), any(BookingStatus.class), any(PageRequest.class));
+                //.findUserByStatus(eq(userId), any(BookingStatus.class), any(PageRequest.class));
+                .findAllByBookerIdAndStatus(eq(userId), any(BookingStatus.class), any(PageRequest.class));
 
         bookingService.findUserBookingsByState(userId, BookingState.ALL, from, size);
         Mockito.verify(bookingRepository, Mockito.atLeastOnce())
-                .findByUserId(eq(userId), any(PageRequest.class));
+                //.findByUserId(eq(userId), any(PageRequest.class));
+                .findAllByBookerId(eq(userId), any(PageRequest.class));
     }
 
     @Test
@@ -388,27 +394,33 @@ public class BookingServiceTest {
 
         bookingService.findOwnerBookingsByState(userId, BookingState.CURRENT, from, size);
         Mockito.verify(bookingRepository, Mockito.atLeastOnce())
-                .findCurrentByOwner(eq(userId), any(LocalDateTime.class), any(PageRequest.class));
+                //.findCurrentByOwner(eq(userId), any(LocalDateTime.class), any(PageRequest.class));
+                .findAllCurrentByItemOwner(eq(userId), any(LocalDateTime.class), any(PageRequest.class));
 
         bookingService.findOwnerBookingsByState(userId, BookingState.PAST, from, size);
         Mockito.verify(bookingRepository, Mockito.atLeastOnce())
-                .findPastByOwner(eq(userId), any(LocalDateTime.class), any(PageRequest.class));
+                //.findPastByOwner(eq(userId), any(LocalDateTime.class), any(PageRequest.class));
+                .findAllByItemOwnerAndEndBefore(eq(userId), any(LocalDateTime.class), any(PageRequest.class));
 
         bookingService.findOwnerBookingsByState(userId, BookingState.FUTURE, from, size);
         Mockito.verify(bookingRepository, Mockito.atLeastOnce())
-                .findFutureByOwner(eq(userId), any(LocalDateTime.class), any(PageRequest.class));
+                //.findFutureByOwner(eq(userId), any(LocalDateTime.class), any(PageRequest.class));
+                .findAllByItemOwnerAndStartAfter(eq(userId), any(LocalDateTime.class), any(PageRequest.class));
 
         bookingService.findOwnerBookingsByState(userId, BookingState.WAITING, from, size);
         Mockito.verify(bookingRepository, Mockito.atLeastOnce())
-                .findByOwnerAndStatus(eq(userId), any(BookingStatus.class), any(PageRequest.class));
+                //.findByOwnerAndStatus(eq(userId), any(BookingStatus.class), any(PageRequest.class));
+                .findAllByItemOwnerAndStatus(eq(userId), any(BookingStatus.class), any(PageRequest.class));
 
         bookingService.findOwnerBookingsByState(userId, BookingState.REJECTED, from, size);
         Mockito.verify(bookingRepository, Mockito.atLeastOnce())
-                .findByOwnerAndStatus(eq(userId), any(BookingStatus.class), any(PageRequest.class));
+                //.findByOwnerAndStatus(eq(userId), any(BookingStatus.class), any(PageRequest.class));
+                .findAllByItemOwnerAndStatus(eq(userId), any(BookingStatus.class), any(PageRequest.class));
 
         bookingService.findOwnerBookingsByState(userId, BookingState.ALL, from, size);
         Mockito.verify(bookingRepository, Mockito.atLeastOnce())
-                .findByOwner(eq(userId), any(PageRequest.class));
+                //.findByOwner(eq(userId), any(PageRequest.class));
+                .findAllByItemOwner(eq(userId), any(PageRequest.class));
     }
 
 }
