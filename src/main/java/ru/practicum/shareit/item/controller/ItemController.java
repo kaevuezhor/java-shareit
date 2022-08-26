@@ -8,10 +8,7 @@ import ru.practicum.shareit.exception.AccessException;
 import ru.practicum.shareit.exception.NotBookedException;
 import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.exception.ValidationException;
-import ru.practicum.shareit.item.dto.CommentDto;
-import ru.practicum.shareit.item.dto.ItemDto;
-import ru.practicum.shareit.item.dto.ItemDtoService;
-import ru.practicum.shareit.item.dto.ItemDtoUserView;
+import ru.practicum.shareit.item.dto.*;
 import ru.practicum.shareit.item.mapper.ItemMapper;
 import ru.practicum.shareit.item.model.Comment;
 import ru.practicum.shareit.item.model.Item;
@@ -30,17 +27,25 @@ public class ItemController {
     private final ItemMapper itemMapper;
 
     @GetMapping("/search")
-    public List<ItemDto> searchItems(@RequestParam String text) {
-        return itemService.searchItems(text)
+    public List<ItemDto> searchItems(
+            @RequestParam(required = false, defaultValue = "0") int from,
+            @RequestParam(required = false, defaultValue = "10") int size,
+            @RequestParam String text
+    ) {
+        return itemService.searchItems(text, from, size)
                 .stream()
                 .map(itemMapper::toItemDto)
                 .collect(Collectors.toList());
     }
 
     @GetMapping
-    public List<ItemDtoUserView> getAllItems(@RequestHeader ("X-Sharer-User-Id") int userId) {
+    public List<ItemDtoUserView> getAllItems(
+            @RequestParam(required = false, defaultValue = "0") int from,
+            @RequestParam(required = false, defaultValue = "10") int size,
+            @RequestHeader ("X-Sharer-User-Id") long userId
+    ) {
         log.info("Запрошены все предметы пользователя {}", userId);
-        List<ItemDtoService> foundItems = itemService.getAllUserItems(userId);
+        List<ItemDtoService> foundItems = itemService.getAllUserItems(userId, from, size);
         return foundItems.stream()
                 .map(itemMapper::toItemDtoUserView)
                 .collect(Collectors.toList());
@@ -49,7 +54,7 @@ public class ItemController {
     @GetMapping("/{itemId}")
     public ItemDtoUserView getItem(
             @PathVariable int itemId,
-            @RequestHeader ("X-Sharer-User-Id") int userId
+            @RequestHeader ("X-Sharer-User-Id") long userId
     ) throws NotFoundException {
         log.info("Запрошен предмет id {}", itemId);
         ItemDtoService foundItem = itemService.getItem(itemId, userId);
@@ -57,8 +62,8 @@ public class ItemController {
     }
 
     @PostMapping
-    public ItemDto createItem(@RequestBody Item item,
-                              @RequestHeader ("X-Sharer-User-Id") int userId
+    public ItemDto createItem(@RequestBody ItemDtoCreated item,
+                              @RequestHeader ("X-Sharer-User-Id") long userId
     ) throws ValidationException, NotFoundException {
         if (isNotValidated(item)) {
             throw new ValidationException("Ошибка валидации");
@@ -68,9 +73,9 @@ public class ItemController {
     }
 
     @PatchMapping("/{itemId}")
-    public ItemDto updateItem(@PathVariable int itemId,
+    public ItemDto updateItem(@PathVariable long itemId,
                               @RequestBody Item item,
-                              @RequestHeader ("X-Sharer-User-Id") int userId
+                              @RequestHeader ("X-Sharer-User-Id") long userId
     ) throws NotFoundException, AccessException {
         log.info("Обновлен предмет {} пользователем {},\n"
         + "Обновлено: {}", itemId, userId, item);
@@ -78,8 +83,8 @@ public class ItemController {
     }
 
     @DeleteMapping("/{itemId}")
-    public void deleteItem(@PathVariable int itemId,
-                           @RequestHeader ("X-Sharer-User-Id") int userId
+    public void deleteItem(@PathVariable long itemId,
+                           @RequestHeader ("X-Sharer-User-Id") long userId
     ) throws AccessException, NotFoundException {
         log.info("Удален предмет {} пользователем {}", itemId, userId);
         itemService.deleteItem(itemId, userId);
@@ -98,7 +103,7 @@ public class ItemController {
         return itemMapper.toCommentDto(itemService.postComment(userId, itemId, comment));
     }
 
-    private boolean isNotValidated(Item item) {
+    private boolean isNotValidated(ItemDtoCreated item) {
         boolean isBlankName = !StringUtils.hasText(item.getName());
         boolean isBlankDescription = !StringUtils.hasText(item.getDescription());
         boolean isBlankAvailable = item.getAvailable() == null;

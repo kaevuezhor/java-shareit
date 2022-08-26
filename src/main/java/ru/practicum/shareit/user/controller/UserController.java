@@ -26,7 +26,7 @@ public class UserController {
     private final UserMapper userMapper;
 
     @GetMapping("/{id}")
-    public UserDto getUser(@PathVariable int id) throws NotFoundException {
+    public UserDto getUser(@PathVariable long id) throws NotFoundException {
         log.info("Запрошен пользователь id {}", id);
         return userMapper.toUserDto(userService.getUser(id));
     }
@@ -50,7 +50,7 @@ public class UserController {
     }
 
     @PatchMapping("/{id}")
-    public UserDto updateUser(@PathVariable int id,
+    public UserDto updateUser(@PathVariable long id,
                               @Valid @RequestBody User user
     ) throws AlreadyExistsException, NotFoundException {
         log.info("Обновлен пользователь id {}", id);
@@ -58,7 +58,7 @@ public class UserController {
     }
 
     @DeleteMapping("/{id}")
-    public void deleteUser(@PathVariable int id) {
+    public void deleteUser(@PathVariable long id) {
         log.info("Удалён пользователь id {}", id);
         userService.deleteUser(id);
     }

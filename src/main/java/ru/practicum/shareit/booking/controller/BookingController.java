@@ -14,9 +14,6 @@ import ru.practicum.shareit.exception.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * // TODO .
- */
 @Slf4j
 @RestController
 @RequestMapping(path = "/bookings")
@@ -62,10 +59,12 @@ public class BookingController {
 
     @GetMapping
     public List<BookingDto> findUserBookingsByState(
-            @RequestParam(required = false, defaultValue = "ALL") BookingState state,
+            @RequestParam(required = false, defaultValue = "0") int from,
+            @RequestParam(required = false, defaultValue = "10") int size,
+            @RequestParam(required = false, defaultValue = "ALL") String state,
             @RequestHeader("X-Sharer-User-Id") long userId
-    ) {
-        List<Booking> foundBookings = bookingService.findUserBookingsByState(userId, state);
+    ) throws NotFoundException, ValidationException {
+        List<Booking> foundBookings = bookingService.findUserBookingsByState(userId, getState(state), from, size);
         log.info("Запрошены бронирования пользователя {} в статусе {}",  userId, state);
         return foundBookings
                 .stream()
@@ -74,11 +73,13 @@ public class BookingController {
     }
 
     @GetMapping("/owner")
-    public List<BookingDto> findBookingsByUserAndState(
-            @RequestParam(required = false, defaultValue = "ALL") BookingState state,
+    public List<BookingDto> findOwnerBookingsByState(
+            @RequestParam(required = false, defaultValue = "0") int from,
+            @RequestParam(required = false, defaultValue = "10") int size,
+            @RequestParam(required = false, defaultValue = "ALL") String state,
             @RequestHeader("X-Sharer-User-Id") long userId
-    ) {
-        List<Booking> foundBookings = bookingService.findOwnerBookingsByState(userId, state);
+    ) throws NotFoundException, ValidationException {
+        List<Booking> foundBookings = bookingService.findOwnerBookingsByState(userId, getState(state), from, size);
         log.info("Запрошены бронирования вещей пользователя {} в статусе {}",  userId, state);
         return foundBookings
                 .stream()
@@ -89,5 +90,16 @@ public class BookingController {
     private boolean hasViewAccess(Booking booking, long id) {
         return List.of(booking.getItem().getOwner(), booking.getBooker().getId())
                 .contains(id);
+    }
+
+    private BookingState getState(String state) throws ValidationException {
+        BookingState stateCase;
+        try {
+            stateCase = BookingState.valueOf(state);
+        } catch (IllegalArgumentException e) {
+            log.error("Unknown state: {}", state);
+            throw new ValidationException(String.format("Unknown state: %s", state));
+        }
+        return stateCase;
     }
 }
