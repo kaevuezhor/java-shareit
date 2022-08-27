@@ -112,13 +112,6 @@ public class RequestServiceTest {
 
         Assertions.assertEquals("Пользователь 3 не найден", notFoundException.getMessage());
 
-        final ValidationException validationException = Assertions.assertThrows(
-                ValidationException.class,
-                () -> requestService.createRequest(wrongRequest, userId)
-        );
-
-        Assertions.assertEquals("Отсутствует описание", validationException.getMessage());
-
         ItemRequest savedRequest = requestService.createRequest(testRequestCreation, userId);
 
         Assertions.assertEquals(testRequest, savedRequest);
@@ -186,20 +179,6 @@ public class RequestServiceTest {
         int from = 0;
         int size = 1;
         long requestId = 1;
-
-        final ValidationException validationException1 = Assertions.assertThrows(
-                ValidationException.class,
-                () -> requestService.findAll(-1, 5, userId)
-        );
-
-        Assertions.assertEquals("Ошибка в параметрах запроса", validationException1.getMessage());
-
-        final ValidationException validationException2 = Assertions.assertThrows(
-                ValidationException.class,
-                () -> requestService.findAll(1, 0, userId)
-        );
-
-        Assertions.assertEquals("Ошибка в параметрах запроса", validationException2.getMessage());
 
         PageRequest pageRequest = PageRequest.of(from, size, Sort.by(Sort.Order.desc("created")));
 

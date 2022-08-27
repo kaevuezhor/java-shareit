@@ -135,11 +135,6 @@ public class BookingServiceTest {
                 testStartDate,
                 testEndDate
         );
-        BookingDtoCreate requestBodyWrongStart = new BookingDtoCreate(
-                1L,
-                testEndDate,
-                testStartDate
-        );
         Booking savingBooking = new Booking(
                 0L,
                 requestBody.getStart(),
@@ -212,13 +207,6 @@ public class BookingServiceTest {
         );
 
         Assertions.assertEquals("Предмет недоступен для бронирования", itemUnavailableException.getMessage());
-
-        final ValidationException validationException = Assertions.assertThrows(
-                ValidationException.class,
-                () -> bookingService.createBooking(requestBodyWrongStart, userId)
-        );
-
-        Assertions.assertEquals("Ошибка валидации", validationException.getMessage());
 
         Booking savedBooking = bookingService.createBooking(requestBody, userId);
 
