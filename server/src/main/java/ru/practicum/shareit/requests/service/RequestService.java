@@ -1,7 +1,6 @@
 package ru.practicum.shareit.requests.service;
 
 import ru.practicum.shareit.exception.NotFoundException;
-import ru.practicum.shareit.exception.ValidationException;
 import ru.practicum.shareit.requests.dto.ItemRequestServiceDto;
 import ru.practicum.shareit.requests.model.ItemRequest;
 
