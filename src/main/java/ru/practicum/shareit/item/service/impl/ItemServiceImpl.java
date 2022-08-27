@@ -167,7 +167,7 @@ public class ItemServiceImpl implements ItemService {
                 .anyMatch(booking -> booking.getItem().getId() == itemId);
         boolean isCurrentBooking = bookingRepository
                 //.findUserCurrent(userId, LocalDateTime.now())
-                .findAllByBookerIdCurrent(userId, LocalDateTime.now())
+                .findAllCurrentByBookerId(userId, LocalDateTime.now())
                 .stream()
                 .anyMatch(booking -> booking.getItem().getId() == itemId);
         return isPastBooking || isCurrentBooking;

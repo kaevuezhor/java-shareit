@@ -102,7 +102,7 @@ public class BookingServiceImpl implements BookingService {
         PageRequest pageRequest = PageRequest.of(from, size, Sort.by(Sort.Order.desc("start")));
         switch (state) {
             case CURRENT:
-                return bookingRepository.findAllByBookerIdCurrent(userId, LocalDateTime.now(), pageRequest);
+                return bookingRepository.findAllCurrentByBookerId(userId, LocalDateTime.now(), pageRequest);
             case PAST:
                 return bookingRepository.findAllByBookerIdAndEndBefore(userId, LocalDateTime.now(), pageRequest);
             case FUTURE:
