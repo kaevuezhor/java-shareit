@@ -85,7 +85,7 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public List<Booking> findUserBookingsByState(long userId, BookingState state, int from, int size) throws NotFoundException{
+    public List<Booking> findUserBookingsByState(long userId, BookingState state, int from, int size) throws NotFoundException {
         Optional<User> user = userRepository.findById(userId);
         if (user.isEmpty()) {
             throw new NotFoundException("Пользователь " + userId + " не найден");
