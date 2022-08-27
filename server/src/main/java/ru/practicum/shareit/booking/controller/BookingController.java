@@ -27,7 +27,7 @@ public class BookingController {
     public BookingDto bookItem(
             @RequestBody BookingDtoCreate booking,
             @RequestHeader("X-Sharer-User-Id") long userId
-    ) throws NotFoundException, ValidationException, UnavailableException, AccessException {
+    ) throws NotFoundException, UnavailableException, AccessException {
         Booking savedBooking = bookingService.createBooking(booking, userId);
         log.info("Creating booking {} by userId={}", booking, userId);
         return bookingMapper.toBookingDto(savedBooking);
@@ -63,7 +63,7 @@ public class BookingController {
             @RequestParam(required = false, defaultValue = "10") int size,
             @RequestParam(required = false, defaultValue = "ALL") String state,
             @RequestHeader("X-Sharer-User-Id") long userId
-    ) throws NotFoundException, ValidationException {
+    ) throws NotFoundException {
         List<Booking> foundBookings = bookingService.findUserBookingsByState(userId, BookingState.valueOf(state), from, size);
         log.info("Get booking with state {}, userId={}, from={}, size={}", state, userId, from, size);
         return foundBookings
@@ -78,7 +78,7 @@ public class BookingController {
             @RequestParam(required = false, defaultValue = "10") int size,
             @RequestParam(required = false, defaultValue = "ALL") String state,
             @RequestHeader("X-Sharer-User-Id") long userId
-    ) throws NotFoundException, ValidationException {
+    ) throws NotFoundException {
         List<Booking> foundBookings = bookingService.findOwnerBookingsByState(userId, BookingState.valueOf(state), from, size);
         log.info("Запрошены бронирования вещей пользователя {} в статусе {}",  userId, state);
         return foundBookings

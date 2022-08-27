@@ -49,7 +49,7 @@ public class RequestServiceImpl implements RequestService {
     }
 
     @Override
-    public List<ItemRequestServiceDto> findAll(int from, int size, long userId) throws ValidationException, NotFoundException {
+    public List<ItemRequestServiceDto> findAll(int from, int size, long userId) throws NotFoundException {
         Optional<User> user = userRepository.findById(userId);
         if (user.isEmpty()) {
             throw new NotFoundException("Пользователь " + userId + " не найден");

@@ -8,11 +8,11 @@ import ru.practicum.shareit.requests.model.ItemRequest;
 import java.util.List;
 
 public interface RequestService {
-    ItemRequest createRequest(ItemRequest itemRequest, long userId) throws NotFoundException, ValidationException;
+    ItemRequest createRequest(ItemRequest itemRequest, long userId) throws NotFoundException;
 
     List<ItemRequestServiceDto> findAllByRequester(long userId) throws NotFoundException;
 
-    List<ItemRequestServiceDto> findAll(int from, int size, long userId) throws ValidationException, NotFoundException;
+    List<ItemRequestServiceDto> findAll(int from, int size, long userId) throws NotFoundException;
 
     ItemRequestServiceDto findById(long id, long userId) throws Throwable;
 }

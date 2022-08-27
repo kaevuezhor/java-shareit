@@ -27,7 +27,7 @@ public class ItemRequestController {
     public ItemRequestDto createRequest(
             @RequestBody ItemRequest request,
             @RequestHeader("X-Sharer-User-Id") long userId
-    ) throws NotFoundException, ValidationException {
+    ) throws NotFoundException {
         ItemRequest createdRequest = requestService.createRequest(request, userId);
         log.info("Created request {} by user id={}", createdRequest, userId);
         return requestMapper.toItemRequestDto(new ItemRequestServiceDto(createdRequest, List.of()));
@@ -49,7 +49,7 @@ public class ItemRequestController {
             @RequestHeader("X-Sharer-User-Id") long userId,
             @RequestParam(required = false, defaultValue = "0") int from,
             @RequestParam(required = false, defaultValue = "10") int size
-    ) throws ValidationException, NotFoundException {
+    ) throws NotFoundException {
         List<ItemRequestServiceDto> foundRequests = requestService.findAll(from, size, userId);
         log.info("Get requests from={}, size={} by user id={}, found {}", from, size, userId, foundRequests.size());
         return foundRequests.stream()

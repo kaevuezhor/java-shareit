@@ -115,7 +115,7 @@ public class BookingServiceTest {
     }
 
     @Test
-    void testCreateBooking() throws ValidationException, AccessException, UnavailableException, NotFoundException {
+    void testCreateBooking() throws AccessException, UnavailableException, NotFoundException {
         long userId = 2L;
         long itemOwnerId = 1L;
         long wrongUserId = 6L;

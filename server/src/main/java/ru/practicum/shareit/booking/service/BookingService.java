@@ -9,13 +9,13 @@ import java.util.List;
 
 public interface BookingService {
 
-    Booking createBooking(BookingDtoCreate booking, long userId) throws NotFoundException, ValidationException, UnavailableException, AccessException;
+    Booking createBooking(BookingDtoCreate booking, long userId) throws NotFoundException, UnavailableException, AccessException;
 
     Booking approveBooking(long bookingId, boolean approved, long userId) throws NotFoundException, NotOwnerException, AlreadyApprovedException;
 
     Booking findBooking(long bookingId, long userId) throws Throwable;
 
-    List<Booking> findUserBookingsByState(long userId, BookingState state, int from, int size) throws NotFoundException, ValidationException;
+    List<Booking> findUserBookingsByState(long userId, BookingState state, int from, int size) throws NotFoundException;
 
-    List<Booking> findOwnerBookingsByState(long userId, BookingState state, int from, int size) throws NotFoundException, ValidationException;
+    List<Booking> findOwnerBookingsByState(long userId, BookingState state, int from, int size) throws NotFoundException;
 }

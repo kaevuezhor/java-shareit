@@ -173,7 +173,7 @@ public class RequestServiceTest {
     }
 
     @Test
-    void testFindAll() throws ValidationException, NotFoundException {
+    void testFindAll() throws NotFoundException {
         long userId = 1;
         long wrongUserId = 3;
         int from = 0;
