@@ -1,7 +1,7 @@
 # Проект "Share It"
 
 ## Стэк
-Java, Spring Boot, Hibernate, Docker
+Java, Spring Boot, Hibernate, Docker, Maven
 
 ## Описание
 Бэкенд сервиса для "шеринга" вещей между пользователями
